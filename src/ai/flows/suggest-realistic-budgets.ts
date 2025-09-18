@@ -48,7 +48,11 @@ const prompt = ai.definePrompt({
   sugira valores de orçamento mensais realistas para cada categoria de despesa. Considere a renda mensal do usuário
   ao fazer suas sugestões. As sugestões devem estar alinhadas com a renda e os hábitos de consumo do usuário. Retorne um objeto JSON com as categorias de despesa como chaves e os valores do orçamento como valores.
 
-Dados Históricos de Gastos: {{{historicalSpendingData}}}
+Dados Históricos de Gastos:
+{{#each historicalSpendingData}}
+- {{this.[0]}}: {{this.[1]}}
+{{/each}}
+
 Renda Mensal: {{{income}}}
 
 Solicitações de Contexto:
@@ -70,7 +74,10 @@ const suggestRealisticBudgetsFlow = ai.defineFlow(
     outputSchema: SuggestRealisticBudgetsOutputSchema,
   },
   async input => {
-    const {output} = await prompt(input);
+    const {output} = await prompt({
+      ...input,
+      historicalSpendingData: Object.entries(input.historicalSpendingData)
+    });
     return output!;
   }
 );
