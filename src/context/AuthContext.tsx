@@ -2,51 +2,57 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { User } from 'firebase/auth';
+
+// Define a simplified user type for our mock
+export interface MockUser extends Omit<User, 'providerData' | 'toJSON' | 'delete' | 'getIdToken' | 'getIdTokenResult' | 'reload'> {
+    // Add any custom fields if necessary
+}
+
+// Mock users for development without real Firebase config
+export const mockUsers: MockUser[] = [
+    {
+        uid: 'mock-user-uid-admin',
+        email: 'admin@contasimples.com',
+        emailVerified: true,
+        displayName: 'Administrador',
+        isAnonymous: false,
+        photoURL: 'https://picsum.photos/seed/user-avatar-admin/40/40',
+        metadata: {
+            creationTime: new Date().toISOString(),
+            lastSignInTime: new Date().toISOString(),
+        },
+        providerId: 'password',
+        tenantId: null,
+    },
+    {
+        uid: 'mock-user-uid-user1',
+        email: 'user1@contasimples.com',
+        emailVerified: true,
+        displayName: 'Usuário Padrão',
+        isAnonymous: false,
+        photoURL: 'https://picsum.photos/seed/user-avatar-user1/40/40',
+        metadata: {
+            creationTime: new Date().toISOString(),
+            lastSignInTime: new Date().toISOString(),
+        },
+        providerId: 'password',
+        tenantId: null,
+    },
+];
+
 
 interface AuthContextType {
-  user: User | null;
+  user: MockUser | null;
   loading: boolean;
-  login: () => void;
+  login: (user: MockUser) => void;
   logout: () => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock user for development without real Firebase config
-const mockUser: User = {
-    uid: 'mock-user-uid',
-    email: 'dev@contasimples.com',
-    emailVerified: true,
-    displayName: 'Admin',
-    isAnonymous: false,
-    photoURL: 'https://picsum.photos/seed/user-avatar/40/40',
-    providerData: [],
-    metadata: {
-        creationTime: new Date().toISOString(),
-        lastSignInTime: new Date().toISOString(),
-    },
-    providerId: 'password',
-    tenantId: null,
-    delete: async () => {},
-    getIdToken: async () => 'mock-token',
-    getIdTokenResult: async () => ({
-        token: 'mock-token',
-        expirationTime: new Date().toISOString(),
-        authTime: new Date().toISOString(),
-        issuedAtTime: new Date().toISOString(),
-        signInProvider: 'password',
-        signInSecondFactor: null,
-        claims: {},
-    }),
-    reload: async () => {},
-    toJSON: () => ({}),
-};
-
-
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<MockUser | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -62,14 +68,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
     setLoading(false);
 
-    // Note: Firebase onAuthStateChanged logic would go here for a real implementation
-    // For this mock setup, we manage the state manually via login/logout.
-
   }, []);
 
-  const login = () => {
-    sessionStorage.setItem('user', JSON.stringify(mockUser));
-    setUser(mockUser);
+  const login = (userToLogin: MockUser) => {
+    sessionStorage.setItem('user', JSON.stringify(userToLogin));
+    setUser(userToLogin);
   };
 
   const logout = () => {

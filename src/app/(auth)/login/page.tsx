@@ -4,9 +4,6 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useForm } from 'react-hook-form';
-import { zodResolver } from '@hookform/resolvers/zod';
-import * as z from 'zod';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,57 +14,48 @@ import {
   CardTitle,
 } from '@/components/ui/card';
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from '@/components/ui/form';
-import { Input } from '@/components/ui/input';
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+  } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { Gem, Loader2 } from 'lucide-react';
-import { useAuth } from '@/context/AuthContext';
-
-const loginSchema = z.object({
-  username: z.string().min(1, 'Por favor, insira um nome de usuário.'),
-  password: z.string().min(1, 'A senha é obrigatória.'),
-});
+import { Gem, Loader2, User } from 'lucide-react';
+import { useAuth, mockUsers, MockUser } from '@/context/AuthContext';
+import { Label } from '@/components/ui/label';
 
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<MockUser | null>(null);
 
-  const form = useForm<z.infer<typeof loginSchema>>({
-    resolver: zodResolver(loginSchema),
-    defaultValues: {
-      username: '',
-      password: '',
-    },
-  });
-
-  async function onSubmit(values: z.infer<typeof loginSchema>) {
+  const handleLogin = () => {
+    if (!selectedUser) {
+        toast({
+            variant: 'destructive',
+            title: 'Erro',
+            description: 'Por favor, selecione um usuário para entrar.',
+        });
+        return;
+    }
     setIsLoading(true);
     // Simulating a network request
     setTimeout(() => {
-      if (values.username === 'admin' && values.password === 'admin') {
-        login(); // Set the user in the context
+        login(selectedUser); // Set the user in the context
         toast({
           title: 'Login bem-sucedido!',
-          description: 'Redirecionando para o painel...',
+          description: `Bem-vindo, ${selectedUser.displayName}! Redirecionando para o painel...`,
         });
         router.push('/dashboard');
-      } else {
-        toast({
-          variant: 'destructive',
-          title: 'Erro no Login',
-          description: 'As credenciais fornecidas estão incorretas. Por favor, tente novamente.',
-        });
-        setIsLoading(false);
-      }
-    }, 1000);
+    }, 500);
+  };
+
+  const handleUserChange = (userId: string) => {
+    const user = mockUsers.find(u => u.uid === userId) || null;
+    setSelectedUser(user);
   }
 
   return (
@@ -77,70 +65,37 @@ export default function LoginPage() {
             <div className="flex justify-center items-center mb-4">
                 <Gem className="h-8 w-8 text-primary" />
             </div>
-          <CardTitle className="text-2xl font-bold">Bem-vindo de volta!</CardTitle>
+          <CardTitle className="text-2xl font-bold">Acessar Painel</CardTitle>
           <CardDescription>
-            Faça login para acessar seu painel financeiro.
+            Selecione um perfil de usuário para continuar.
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <Form {...form}>
-            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Nome de usuário</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="admin"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="password"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Senha</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="password"
-                        placeholder="••••••••"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? <Loader2 className="animate-spin" /> : 'Entrar'}
-              </Button>
-            </form>
-          </Form>
-          <div className="mt-4 text-center text-sm">
-            <Link
-              href="/forgot-password"
-              className="underline underline-offset-4 hover:text-primary"
-            >
-              Esqueceu sua senha?
-            </Link>
-          </div>
+        <CardContent className="space-y-4">
+            <div className="space-y-2">
+                <Label htmlFor="user-select">Selecione o Usuário</Label>
+                <Select onValueChange={handleUserChange}>
+                    <SelectTrigger id="user-select">
+                        <SelectValue placeholder="Escolha um perfil..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {mockUsers.map(user => (
+                             <SelectItem key={user.uid} value={user.uid}>
+                                <div className="flex items-center gap-2">
+                                    <User className="h-4 w-4" />
+                                    <span>{user.displayName}</span>
+                                </div>
+                             </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
+          <Button onClick={handleLogin} className="w-full" disabled={isLoading || !selectedUser}>
+            {isLoading ? <Loader2 className="animate-spin" /> : 'Entrar'}
+          </Button>
         </CardContent>
         <CardFooter className="flex-col gap-4">
           <div className="text-center text-sm text-muted-foreground">
-            Ainda não tem uma conta?{' '}
-            <Link
-              href="/signup"
-              className="font-semibold text-primary underline underline-offset-4 hover:text-primary/80"
-            >
-              Cadastre-se
-            </Link>
+            Este é um login simulado para desenvolvimento.
           </div>
         </CardFooter>
       </Card>
