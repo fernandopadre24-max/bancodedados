@@ -2,8 +2,6 @@
 'use client';
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { signOut } from "firebase/auth";
-import { auth } from "@/lib/firebase";
 import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
@@ -23,25 +21,17 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 
 export default function AppHeader() {
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const userAvatar = PlaceHolderImages.find(p => p.id === "user-avatar");
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      toast({
-        title: "Logout realizado com sucesso!",
-      });
-      router.push("/login");
-    } catch (error) {
-      toast({
-        variant: "destructive",
-        title: "Erro ao sair",
-        description: "Não foi possível fazer logout. Tente novamente.",
-      });
-    }
+  const handleLogout = () => {
+    logout();
+    toast({
+      title: "Logout realizado com sucesso!",
+    });
+    router.push("/login");
   };
   
   return (
@@ -64,16 +54,16 @@ export default function AppHeader() {
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
-                <Link href="/profile">
-                    <User className="mr-2 h-4 w-4" />
-                    <span>Perfil</span>
-                </Link>
+              <Link href="/profile">
+                  <User className="mr-2 h-4 w-4" />
+                  <span>Perfil</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuItem asChild>
-                <Link href="/settings">
-                    <Settings className="mr-2 h-4 w-4" />
-                    <span>Configurações</span>
-                </Link>
+              <Link href="/settings">
+                  <Settings className="mr-2 h-4 w-4" />
+                  <span>Configurações</span>
+              </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleLogout}>

@@ -27,6 +27,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Gem, Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const loginSchema = z.object({
   username: z.string().min(1, 'Por favor, insira um nome de usuário.'),
@@ -36,6 +37,7 @@ const loginSchema = z.object({
 export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof loginSchema>>({
@@ -51,6 +53,7 @@ export default function LoginPage() {
     // Simulating a network request
     setTimeout(() => {
       if (values.username === 'admin' && values.password === 'admin') {
+        login(); // Set the user in the context
         toast({
           title: 'Login bem-sucedido!',
           description: 'Redirecionando para o painel...',
