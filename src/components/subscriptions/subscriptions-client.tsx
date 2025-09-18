@@ -1,3 +1,4 @@
+
 'use client'
 
 import React from 'react';
@@ -59,6 +60,7 @@ import {
 import { cn } from '@/lib/utils';
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
+import { useData } from '@/context/DataContext';
 
 
 const subscriptionSchema = z.object({
@@ -84,7 +86,7 @@ const formatDate = (date: Date) => {
 };
 
 export default function SubscriptionsClient({ initialSubscriptions }: { initialSubscriptions: Subscription[] }) {
-  const [subscriptions, setSubscriptions] = React.useState(initialSubscriptions.sort((a, b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime()));
+  const { subscriptions, addSubscription, updateSubscription, deleteSubscription } = useData();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [editingSubscription, setEditingSubscription] = React.useState<Subscription | null>(null);
@@ -120,11 +122,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
   }
 
   function onAddSubmit(values: z.infer<typeof subscriptionSchema>) {
-    const newSubscription: Subscription = {
-      id: (subscriptions.length + 1).toString(),
-      ...values,
-    };
-    setSubscriptions([...subscriptions, newSubscription].sort((a, b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime()));
+    addSubscription(values);
     toast({
         title: "Assinatura Adicionada",
         description: `A assinatura "${values.name}" foi adicionada com sucesso.`,
@@ -135,12 +133,11 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
   function onEditSubmit(values: z.infer<typeof subscriptionSchema>) {
     if (!editingSubscription) return;
 
-    const updatedSubscription: Subscription = {
+    const updatedSub: Subscription = {
         ...editingSubscription,
         ...values,
     };
-
-    setSubscriptions(subscriptions.map(s => s.id === editingSubscription.id ? updatedSubscription : s).sort((a,b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime()));
+    updateSubscription(updatedSub);
     toast({
         title: "Assinatura Atualizada",
         description: `A assinatura "${values.name}" foi atualizada com sucesso.`,
@@ -159,7 +156,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
   };
 
   function handleDeleteSubscription(subscriptionId: string) {
-    setSubscriptions(subscriptions.filter(s => s.id !== subscriptionId));
+    deleteSubscription(subscriptionId);
     toast({
         title: "Assinatura Removida",
         description: "A assinatura foi removida com sucesso.",
@@ -271,9 +268,9 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
   return (
     <>
     <div className="flex justify-end mb-4">
-        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <Dialog open={isAddDialogOpen} onOpenChange={(open) => { if (!open) handleCloseDialogs(); setIsAddDialogOpen(open) }}>
             <DialogTrigger asChild>
-            <Button onClick={() => { setEditingSubscription(null); form.reset(); }}>
+            <Button onClick={() => { setEditingSubscription(null); form.reset({ name: '', amount: 0, billingCycle: 'mensal', nextPaymentDate: new Date()}); setIsAddDialogOpen(true)}}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Assinatura
             </Button>
@@ -367,7 +364,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
       </CardContent>
     </Card>
 
-    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+    <Dialog open={isEditDialogOpen} onOpenChange={(open) => { if (!open) handleCloseDialogs(); setIsEditDialogOpen(open) }}>
         <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
                 <DialogTitle>Editar Assinatura</DialogTitle>

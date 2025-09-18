@@ -1,3 +1,4 @@
+
 'use client'
 
 import React from 'react';
@@ -39,6 +40,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
+import { useData } from '@/context/DataContext';
 
 const goalSchema = z.object({
   name: z.string().min(1, 'O nome da meta é obrigatório'),
@@ -54,7 +56,7 @@ const formatCurrency = (amount: number) => {
 };
 
 export default function SavingsClient({ initialGoals }: { initialGoals: SavingsGoal[] }) {
-  const [goals, setGoals] = React.useState(initialGoals);
+  const { savingsGoals, addSavingsGoal, deleteSavingsGoal } = useData();
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
 
@@ -68,11 +70,7 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
   });
 
   function onSubmit(values: z.infer<typeof goalSchema>) {
-    const newGoal: SavingsGoal = {
-      id: (goals.length + 1).toString(),
-      ...values,
-    };
-    setGoals([...goals, newGoal]);
+    addSavingsGoal(values);
     toast({
         title: "Meta Adicionada",
         description: `Sua nova meta de poupança "${values.name}" foi criada.`,
@@ -82,7 +80,7 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
   }
 
   function handleDeleteGoal(goalId: string) {
-    setGoals(goals.filter(g => g.id !== goalId));
+    deleteSavingsGoal(goalId);
     toast({
         title: "Meta Removida",
         description: "A meta de poupança foi removida com sucesso.",
@@ -157,7 +155,7 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
       </div>
 
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {goals.map((goal) => {
+        {savingsGoals.map((goal) => {
           const progress = (goal.currentAmount / goal.targetAmount) * 100;
           return (
             <Card key={goal.id}>

@@ -1,12 +1,15 @@
+
 import { budgets, transactions } from "@/lib/data"
 import { PageHeader } from "@/components/shared/page-header"
 import BudgetsClient from "@/components/budgets/budgets-client"
+import { useData } from "@/context/DataContext"
 
 export const metadata = {
   title: "Orçamentos | ContaSimples",
 };
 
 export default function BudgetsPage() {
+  const { transactions } = useData();
   const historicalSpending = transactions.reduce((acc, t) => {
     if (t.type === 'expense') {
         const categoryKey = t.category.toLowerCase().replace(' ', '');

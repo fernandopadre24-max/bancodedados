@@ -1,7 +1,7 @@
+
 'use client'
 
 import React from 'react';
-import type { Transaction, Budget } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
   ChartContainer,
@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/chart';
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Progress } from '@/components/ui/progress';
+import { useData } from '@/context/DataContext';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -31,7 +32,9 @@ const chartConfig = {
   },
 };
 
-export default function ReportsClient({ transactions, budgets }: { transactions: Transaction[], budgets: Budget[] }) {
+export default function ReportsClient() {
+  const { transactions, budgets } = useData();
+
   const chartData = React.useMemo(() => {
     const dataByMonth: { [key: string]: { income: number; expenses: number } } = {};
     

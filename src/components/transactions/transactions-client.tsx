@@ -1,3 +1,4 @@
+
 'use client'
 
 import React from 'react';
@@ -55,6 +56,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { useData } from '@/context/DataContext';
 
 const transactionSchema = z.object({
   description: z.string().min(1, 'A descrição é obrigatória'),
@@ -78,8 +80,8 @@ const formatDate = (date: Date) => {
     }).format(date);
 };
 
-export default function TransactionsClient({ transactions: initialTransactions }: { transactions: Transaction[] }) {
-  const [transactions, setTransactions] = React.useState(initialTransactions);
+export default function TransactionsClient({ initialTransactions }: { initialTransactions: Transaction[] }) {
+  const { transactions, addTransaction, deleteTransaction } = useData();
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
 
@@ -91,12 +93,7 @@ export default function TransactionsClient({ transactions: initialTransactions }
   });
 
   function onSubmit(values: z.infer<typeof transactionSchema>) {
-    const newTransaction: Transaction = {
-      id: (transactions.length + 1).toString(),
-      date: new Date(),
-      ...values,
-    };
-    setTransactions([newTransaction, ...transactions]);
+    addTransaction(values);
     toast({
         title: "Transação Adicionada",
         description: `${values.description} foi adicionado às suas transações.`,
@@ -106,7 +103,7 @@ export default function TransactionsClient({ transactions: initialTransactions }
   }
 
   function handleDeleteTransaction(transactionId: string) {
-    setTransactions(transactions.filter(t => t.id !== transactionId));
+    deleteTransaction(transactionId);
     toast({
         title: "Transação Removida",
         description: "A transação foi removida com sucesso.",

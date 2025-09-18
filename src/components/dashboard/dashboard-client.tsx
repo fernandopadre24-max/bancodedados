@@ -1,22 +1,18 @@
+
 'use client'
 
 import React from "react"
-import type { Transaction, Budget, SavingsGoal, Subscription } from "@/lib/types"
-import { SummaryCard } from "./summary-card"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { categoryIcons } from "@/lib/icons"
 import { Badge } from "@/components/ui/badge"
-import { ArrowUpRight, ArrowDownLeft, DollarSign, PiggyBank, Repeat, AlertCircle } from "lucide-react"
+import { ArrowUpRight, ArrowDownLeft, DollarSign, Repeat, AlertCircle } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { useData } from "@/context/DataContext"
+import { SummaryCard } from "./summary-card"
 
-interface DashboardClientProps {
-  transactions: Transaction[]
-  budgets: Budget[]
-  savingsGoals: SavingsGoal[]
-  subscriptions: Subscription[]
-}
+interface DashboardClientProps {}
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -41,7 +37,9 @@ const getDaysUntilNextPayment = (date: Date) => {
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
-export default function DashboardClient({ transactions, budgets, savingsGoals, subscriptions }: DashboardClientProps) {
+export default function DashboardClient({}: DashboardClientProps) {
+  const { transactions, budgets, savingsGoals, subscriptions } = useData();
+
   const { totalIncome, totalExpenses, balance } = React.useMemo(() => {
     const totalIncome = transactions
       .filter(t => t.type === 'income')

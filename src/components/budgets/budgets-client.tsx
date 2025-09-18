@@ -1,3 +1,4 @@
+
 'use client'
 
 import React from 'react'
@@ -29,6 +30,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
+import { useData } from '@/context/DataContext'
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -44,7 +46,7 @@ interface BudgetsClientProps {
 }
 
 export default function BudgetsClient({ initialBudgets, historicalSpendingData, income }: BudgetsClientProps) {
-  const [budgets, setBudgets] = React.useState(initialBudgets)
+  const { budgets, deleteBudget, applyBudgetSuggestions } = useData();
   const [isSuggesting, setIsSuggesting] = React.useState(false)
   const [suggestedBudgets, setSuggestedBudgets] = React.useState<SuggestRealisticBudgetsOutput | null>(null)
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
@@ -72,18 +74,10 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
     }
   }
 
-  const applySuggestions = () => {
+  const handleApplySuggestions = () => {
     if (!suggestedBudgets) return;
     
-    const updatedBudgets = budgets.map(budget => {
-        const suggestionKey = budget.category.toLowerCase().replace(' ', '');
-        if (suggestedBudgets[suggestionKey]) {
-            return { ...budget, amount: suggestedBudgets[suggestionKey] };
-        }
-        return budget;
-    });
-
-    setBudgets(updatedBudgets);
+    applyBudgetSuggestions(suggestedBudgets);
     setIsDialogOpen(false);
     setSuggestedBudgets(null);
     toast({
@@ -93,7 +87,7 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
   }
 
   function handleDeleteBudget(budgetId: string) {
-    setBudgets(budgets.filter(b => b.id !== budgetId));
+    deleteBudget(budgetId);
     toast({
         title: "Orçamento Removido",
         description: "O orçamento foi removido com sucesso.",
@@ -235,7 +229,7 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
           )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
-            <Button onClick={applySuggestions}>
+            <Button onClick={handleApplySuggestions}>
                 <Check className="mr-2 h-4 w-4" />
                 Aplicar Sugestões
             </Button>
