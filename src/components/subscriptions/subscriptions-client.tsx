@@ -84,15 +84,35 @@ const formatDate = (date: Date) => {
 };
 
 export default function SubscriptionsClient({ initialSubscriptions }: { initialSubscriptions: Subscription[] }) {
-  const [subscriptions, setSubscriptions] = React.useState(initialSubscriptions);
-  const [open, setOpen] = React.useState(false);
+  const [subscriptions, setSubscriptions] = React.useState(initialSubscriptions.sort((a, b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime()));
+  const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
+  const [editingSubscription, setEditingSubscription] = React.useState<Subscription | null>(null);
   const { toast } = useToast();
 
   const form = useForm<z.infer<typeof subscriptionSchema>>({
     resolver: zodResolver(subscriptionSchema),
   });
+  
+  React.useEffect(() => {
+    if (editingSubscription) {
+        form.reset({
+            name: editingSubscription.name,
+            amount: editingSubscription.amount,
+            billingCycle: editingSubscription.billingCycle,
+            nextPaymentDate: editingSubscription.nextPaymentDate
+        });
+    } else {
+        form.reset({ name: '', amount: 0, billingCycle: 'mensal', nextPaymentDate: new Date()});
+    }
+  }, [editingSubscription, form]);
 
-  function onSubmit(values: z.infer<typeof subscriptionSchema>) {
+  function handleOpenEditDialog(subscription: Subscription) {
+    setEditingSubscription(subscription);
+    setIsEditDialogOpen(true);
+  }
+
+  function onAddSubmit(values: z.infer<typeof subscriptionSchema>) {
     const newSubscription: Subscription = {
       id: (subscriptions.length + 1).toString(),
       ...values,
@@ -103,8 +123,27 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
         description: `A assinatura "${values.name}" foi adicionada com sucesso.`,
     });
     form.reset();
-    setOpen(false);
+    setIsAddDialogOpen(false);
   }
+  
+  function onEditSubmit(values: z.infer<typeof subscriptionSchema>) {
+    if (!editingSubscription) return;
+
+    const updatedSubscription: Subscription = {
+        ...editingSubscription,
+        ...values,
+    };
+
+    setSubscriptions(subscriptions.map(s => s.id === editingSubscription.id ? updatedSubscription : s).sort((a,b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime()));
+    toast({
+        title: "Assinatura Atualizada",
+        description: `A assinatura "${values.name}" foi atualizada com sucesso.`,
+    });
+    setEditingSubscription(null);
+    setIsEditDialogOpen(false);
+    form.reset();
+  }
+
 
   const getDaysUntilNextPayment = (date: Date) => {
     const today = new Date();
@@ -123,10 +162,111 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
     });
   }
   
+  const renderForm = (submitHandler: (values: z.infer<typeof subscriptionSchema>) => void) => (
+    <Form {...form}>
+        <form onSubmit={form.handleSubmit(submitHandler)} className="space-y-4">
+        <FormField
+            control={form.control}
+            name="name"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Nome</FormLabel>
+                <FormControl>
+                <Input placeholder="ex: Netflix" {...field} />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        <FormField
+            control={form.control}
+            name="amount"
+            render={({ field }) => (
+            <FormItem>
+                <FormLabel>Valor</FormLabel>
+                <FormControl>
+                <Input type="number" step="0.01" placeholder="15,99" {...field} />
+                </FormControl>
+                <FormMessage />
+            </FormItem>
+            )}
+        />
+        <div className="grid grid-cols-2 gap-4">
+            <FormField
+                control={form.control}
+                name="billingCycle"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Ciclo de Cobrança</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                        <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                        <SelectItem value="mensal">Mensal</SelectItem>
+                        <SelectItem value="anual">Anual</SelectItem>
+                    </SelectContent>
+                    </Select>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+            <FormField
+                control={form.control}
+                name="nextPaymentDate"
+                render={({ field }) => (
+                <FormItem>
+                    <FormLabel>Próximo Pagamento</FormLabel>
+                    <Popover>
+                        <PopoverTrigger asChild>
+                        <FormControl>
+                            <Button
+                            variant={"outline"}
+                            className={cn(
+                                "w-full pl-3 text-left font-normal",
+                                !field.value && "text-muted-foreground"
+                            )}
+                            >
+                            {field.value ? (
+                                format(field.value, "PPP", { locale: ptBR })
+                            ) : (
+                                <span>Escolha uma data</span>
+                            )}
+                            <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                            </Button>
+                        </FormControl>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                            mode="single"
+                            selected={field.value}
+                            onSelect={field.onChange}
+                            disabled={(date) =>
+                                date < new Date(new Date().setDate(new Date().getDate() - 1))
+                            }
+                            initialFocus
+                            locale={ptBR}
+                        />
+                        </PopoverContent>
+                    </Popover>
+                    <FormMessage />
+                </FormItem>
+                )}
+            />
+        </div>
+        <DialogFooter>
+            <Button type="submit">{editingSubscription ? 'Salvar Alterações' : 'Criar Assinatura'}</Button>
+        </DialogFooter>
+        </form>
+    </Form>
+  )
+
   return (
     <>
     <div className="flex justify-end mb-4">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
             <Button>
                 <PlusCircle className="mr-2 h-4 w-4" />
@@ -134,110 +274,13 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
             </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
-            <DialogHeader>
-                <DialogTitle>Nova Assinatura</DialogTitle>
-                <DialogDescription>
-                Registre um novo pagamento recorrente.
-                </DialogDescription>
-            </DialogHeader>
-            <Form {...form}>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                <FormField
-                    control={form.control}
-                    name="name"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Nome</FormLabel>
-                        <FormControl>
-                        <Input placeholder="ex: Netflix" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <FormField
-                    control={form.control}
-                    name="amount"
-                    render={({ field }) => (
-                    <FormItem>
-                        <FormLabel>Valor</FormLabel>
-                        <FormControl>
-                        <Input type="number" step="0.01" placeholder="15,99" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                    </FormItem>
-                    )}
-                />
-                <div className="grid grid-cols-2 gap-4">
-                    <FormField
-                        control={form.control}
-                        name="billingCycle"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Ciclo de Cobrança</FormLabel>
-                            <Select onValueChange={field.onChange} defaultValue={field.value}>
-                            <FormControl>
-                                <SelectTrigger>
-                                <SelectValue placeholder="Selecione..." />
-                                </SelectTrigger>
-                            </FormControl>
-                            <SelectContent>
-                                <SelectItem value="mensal">Mensal</SelectItem>
-                                <SelectItem value="anual">Anual</SelectItem>
-                            </SelectContent>
-                            </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="nextPaymentDate"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Próximo Pagamento</FormLabel>
-                            <Popover>
-                                <PopoverTrigger asChild>
-                                <FormControl>
-                                    <Button
-                                    variant={"outline"}
-                                    className={cn(
-                                        "w-full pl-3 text-left font-normal",
-                                        !field.value && "text-muted-foreground"
-                                    )}
-                                    >
-                                    {field.value ? (
-                                        format(field.value, "PPP", { locale: ptBR })
-                                    ) : (
-                                        <span>Escolha uma data</span>
-                                    )}
-                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
-                                    </Button>
-                                </FormControl>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-auto p-0" align="start">
-                                <Calendar
-                                    mode="single"
-                                    selected={field.value}
-                                    onSelect={field.onChange}
-                                    disabled={(date) =>
-                                        date < new Date(new Date().setDate(new Date().getDate() - 1))
-                                    }
-                                    initialFocus
-                                    locale={ptBR}
-                                />
-                                </PopoverContent>
-                            </Popover>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                </div>
-                <DialogFooter>
-                    <Button type="submit">Criar Assinatura</Button>
-                </DialogFooter>
-                </form>
-            </Form>
+                <DialogHeader>
+                    <DialogTitle>Nova Assinatura</DialogTitle>
+                    <DialogDescription>
+                    Registre um novo pagamento recorrente.
+                    </DialogDescription>
+                </DialogHeader>
+                {renderForm(onAddSubmit)}
             </DialogContent>
         </Dialog>
     </div>
@@ -283,7 +326,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
                                 </TableCell>
                                 <TableCell>
                                     <div className="flex items-center justify-end gap-2">
-                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenEditDialog(sub)}>
                                             <Pencil className="h-4 w-4" />
                                             <span className="sr-only">Editar</span>
                                         </Button>
@@ -318,8 +361,18 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
             </Table>
       </CardContent>
     </Card>
+
+    <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle>Editar Assinatura</DialogTitle>
+                <DialogDescription>
+                    Atualize os detalhes da sua assinatura.
+                </DialogDescription>
+            </DialogHeader>
+            {renderForm(onEditSubmit)}
+        </DialogContent>
+    </Dialog>
     </>
   );
 }
-
-    
