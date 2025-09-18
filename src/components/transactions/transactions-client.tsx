@@ -46,21 +46,21 @@ import { PlusCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 const transactionSchema = z.object({
-  description: z.string().min(1, 'Description is required'),
-  amount: z.coerce.number().positive('Amount must be positive'),
-  category: z.enum(['Food', 'Transportation', 'Housing', 'Entertainment', 'Health', 'Shopping', 'Utilities', 'Income']),
+  description: z.string().min(1, 'A descrição é obrigatória'),
+  amount: z.coerce.number().positive('O valor deve ser positivo'),
+  category: z.enum(['Alimentação', 'Transporte', 'Moradia', 'Entretenimento', 'Saúde', 'Compras', 'Serviços', 'Renda']),
   type: z.enum(['income', 'expense']),
 });
 
 const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'USD',
+      currency: 'BRL',
     }).format(amount)
 };
 
 const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('en-US', {
+    return new Intl.DateTimeFormat('pt-BR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -87,8 +87,8 @@ export default function TransactionsClient({ transactions: initialTransactions }
     };
     setTransactions([newTransaction, ...transactions]);
     toast({
-        title: "Transaction Added",
-        description: `${values.description} has been added to your transactions.`,
+        title: "Transação Adicionada",
+        description: `${values.description} foi adicionado às suas transações.`,
     })
     form.reset();
     setOpen(false);
@@ -96,19 +96,19 @@ export default function TransactionsClient({ transactions: initialTransactions }
 
   return (
     <>
-      <PageHeader title="Transactions" description="View and manage your income and expenses.">
+      <PageHeader title="Transações" description="Veja e gerencie suas receitas e despesas.">
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Transaction
+              Adicionar Transação
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Add a New Transaction</DialogTitle>
+              <DialogTitle>Adicionar Nova Transação</DialogTitle>
               <DialogDescription>
-                Record a new income or expense to keep your finances up to date.
+                Registre uma nova receita ou despesa para manter suas finanças atualizadas.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -118,9 +118,9 @@ export default function TransactionsClient({ transactions: initialTransactions }
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>Descrição</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Dinner with friends" {...field} />
+                        <Input placeholder="ex: Jantar com amigos" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -131,7 +131,7 @@ export default function TransactionsClient({ transactions: initialTransactions }
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Amount</FormLabel>
+                      <FormLabel>Valor</FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="0.00" {...field} />
                       </FormControl>
@@ -145,16 +145,16 @@ export default function TransactionsClient({ transactions: initialTransactions }
                     name="type"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Type</FormLabel>
+                        <FormLabel>Tipo</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select type" />
+                              <SelectValue placeholder="Selecione o tipo" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="expense">Expense</SelectItem>
-                            <SelectItem value="income">Income</SelectItem>
+                            <SelectItem value="expense">Despesa</SelectItem>
+                            <SelectItem value="income">Renda</SelectItem>
                           </SelectContent>
                         </Select>
                         <FormMessage />
@@ -166,11 +166,11 @@ export default function TransactionsClient({ transactions: initialTransactions }
                     name="category"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Category</FormLabel>
+                        <FormLabel>Categoria</FormLabel>
                         <Select onValueChange={field.onChange} defaultValue={field.value}>
                           <FormControl>
                             <SelectTrigger>
-                              <SelectValue placeholder="Select category" />
+                              <SelectValue placeholder="Selecione a categoria" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
@@ -185,7 +185,7 @@ export default function TransactionsClient({ transactions: initialTransactions }
                   />
                 </div>
                 <DialogFooter>
-                  <Button type="submit">Save Transaction</Button>
+                  <Button type="submit">Salvar Transação</Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -196,10 +196,10 @@ export default function TransactionsClient({ transactions: initialTransactions }
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>Description</TableHead>
-              <TableHead>Category</TableHead>
-              <TableHead className="text-right">Amount</TableHead>
+              <TableHead>Data</TableHead>
+              <TableHead>Descrição</TableHead>
+              <TableHead>Categoria</TableHead>
+              <TableHead className="text-right">Valor</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>

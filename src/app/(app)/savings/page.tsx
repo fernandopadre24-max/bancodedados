@@ -3,15 +3,15 @@ import { PageHeader } from "@/components/shared/page-header"
 import SavingsClient from "@/components/savings/savings-client"
 
 export const metadata = {
-  title: "Savings Goals | ContaSimples",
+  title: "Metas de Poupança | ContaSimples",
 };
 
 export default function SavingsPage() {
   return (
     <>
       <PageHeader
-        title="Savings Goals"
-        description="Define your goals and watch your savings grow."
+        title="Metas de Poupança"
+        description="Defina seus objetivos e veja suas economias crescerem."
       />
       <SavingsClient initialGoals={savingsGoals} />
     </>

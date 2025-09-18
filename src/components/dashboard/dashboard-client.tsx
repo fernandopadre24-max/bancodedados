@@ -17,9 +17,9 @@ interface DashboardClientProps {
 }
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'BRL',
   }).format(amount)
 }
 
@@ -41,19 +41,19 @@ export default function DashboardClient({ transactions, budgets, savingsGoals }:
     <div className="grid gap-6">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <SummaryCard
-          title="Total Balance"
+          title="Saldo Total"
           value={formatCurrency(balance)}
           icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           valueClassName="text-primary"
         />
         <SummaryCard
-          title="Month's Income"
+          title="Renda do Mês"
           value={formatCurrency(totalIncome)}
           icon={<ArrowUpRight className="h-5 w-5 text-green-500" />}
           valueClassName="text-green-600"
         />
         <SummaryCard
-          title="Month's Expenses"
+          title="Despesas do Mês"
           value={formatCurrency(totalExpenses)}
           icon={<ArrowDownLeft className="h-5 w-5 text-red-500" />}
           valueClassName="text-red-600"
@@ -63,16 +63,16 @@ export default function DashboardClient({ transactions, budgets, savingsGoals }:
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline">Recent Transactions</CardTitle>
-            <CardDescription>Your latest financial activities.</CardDescription>
+            <CardTitle className="font-headline">Transações Recentes</CardTitle>
+            <CardDescription>Suas últimas atividades financeiras.</CardDescription>
           </CardHeader>
           <CardContent>
              <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Description</TableHead>
-                  <TableHead>Category</TableHead>
-                  <TableHead className="text-right">Amount</TableHead>
+                  <TableHead>Descrição</TableHead>
+                  <TableHead>Categoria</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -106,8 +106,8 @@ export default function DashboardClient({ transactions, budgets, savingsGoals }:
         <div className="space-y-6">
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Budget Overview</CardTitle>
-                    <CardDescription>How you're tracking against your budgets.</CardDescription>
+                    <CardTitle className="font-headline">Visão Geral do Orçamento</CardTitle>
+                    <CardDescription>Como você está se saindo em relação aos seus orçamentos.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {budgets.slice(0,3).map(budget => {
@@ -127,8 +127,8 @@ export default function DashboardClient({ transactions, budgets, savingsGoals }:
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Savings Goals</CardTitle>
-                    <CardDescription>Your progress towards your goals.</CardDescription>
+                    <CardTitle className="font-headline">Metas de Poupança</CardTitle>
+                    <CardDescription>Seu progresso em direção aos seus objetivos.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {savingsGoals.slice(0,2).map(goal => {

@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type Category = 'Food' | 'Transportation' | 'Housing' | 'Entertainment' | 'Health' | 'Shopping' | 'Utilities' | 'Income';
+export type Category = 'Alimentação' | 'Transporte' | 'Moradia' | 'Entretenimento' | 'Saúde' | 'Compras' | 'Serviços' | 'Renda';
 
 export type Transaction = {
   id: string;
@@ -29,7 +29,7 @@ export type Subscription = {
   id: string;
   name: string;
   amount: number;
-  billingCycle: 'monthly' | 'yearly';
+  billingCycle: 'mensal' | 'anual';
   nextPaymentDate: Date;
 };
 

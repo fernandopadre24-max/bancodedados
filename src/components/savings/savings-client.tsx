@@ -30,15 +30,15 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
 const goalSchema = z.object({
-  name: z.string().min(1, 'Goal name is required'),
-  targetAmount: z.coerce.number().positive('Target amount must be positive'),
-  currentAmount: z.coerce.number().min(0, 'Current amount cannot be negative').optional().default(0),
+  name: z.string().min(1, 'O nome da meta é obrigatório'),
+  targetAmount: z.coerce.number().positive('O valor alvo deve ser positivo'),
+  currentAmount: z.coerce.number().min(0, 'O valor atual não pode ser negativo').optional().default(0),
 });
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'BRL',
   }).format(amount);
 };
 
@@ -58,8 +58,8 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
     };
     setGoals([...goals, newGoal]);
     toast({
-        title: "Goal Added",
-        description: `Your new savings goal "${values.name}" has been created.`,
+        title: "Meta Adicionada",
+        description: `Sua nova meta de poupança "${values.name}" foi criada.`,
     })
     form.reset();
     setOpen(false);
@@ -72,14 +72,14 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
-              Add Savings Goal
+              Adicionar Meta de Poupança
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>New Savings Goal</DialogTitle>
+              <DialogTitle>Nova Meta de Poupança</DialogTitle>
               <DialogDescription>
-                Define a new goal you want to save up for.
+                Defina uma nova meta para a qual você deseja economizar.
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
@@ -89,9 +89,9 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
                   name="name"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Goal Name</FormLabel>
+                      <FormLabel>Nome da Meta</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., Vacation to Japan" {...field} />
+                        <Input placeholder="ex: Viagem para o Japão" {...field} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -102,7 +102,7 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
                   name="targetAmount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Target Amount</FormLabel>
+                      <FormLabel>Valor Alvo</FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="5000" {...field} />
                       </FormControl>
@@ -115,7 +115,7 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
                   name="currentAmount"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Current Amount (Optional)</FormLabel>
+                      <FormLabel>Valor Atual (Opcional)</FormLabel>
                       <FormControl>
                         <Input type="number" placeholder="0" {...field} />
                       </FormControl>
@@ -124,7 +124,7 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
                   )}
                 />
                 <DialogFooter>
-                  <Button type="submit">Create Goal</Button>
+                  <Button type="submit">Criar Meta</Button>
                 </DialogFooter>
               </form>
             </Form>
@@ -143,7 +143,7 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
                   {goal.name}
                 </CardTitle>
                 <CardDescription>
-                  Target: {formatCurrency(goal.targetAmount)}
+                  Meta: {formatCurrency(goal.targetAmount)}
                 </CardDescription>
               </CardHeader>
               <CardContent>

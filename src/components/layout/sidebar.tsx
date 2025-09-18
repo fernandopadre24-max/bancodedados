@@ -24,12 +24,12 @@ import {
 } from 'lucide-react';
 
 const menuItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/transactions', label: 'Transactions', icon: Wallet },
-  { href: '/budgets', label: 'Budgets', icon: BookText },
-  { href: '/reports', label: 'Reports', icon: LineChart },
-  { href: '/savings', label: 'Savings Goals', icon: PiggyBank },
-  { href: '/subscriptions', label: 'Subscriptions', icon: Repeat },
+  { href: '/dashboard', label: 'Painel', icon: LayoutDashboard },
+  { href: '/transactions', label: 'Transações', icon: Wallet },
+  { href: '/budgets', label: 'Orçamentos', icon: BookText },
+  { href: '/reports', label: 'Relatórios', icon: LineChart },
+  { href: '/savings', label: 'Metas de Poupança', icon: PiggyBank },
+  { href: '/subscriptions', label: 'Assinaturas', icon: Repeat },
 ];
 
 export default function AppSidebar() {
@@ -65,20 +65,20 @@ export default function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/settings" passHref>
-              <SidebarMenuButton asChild tooltip="Settings">
+              <SidebarMenuButton asChild tooltip="Configurações">
                 <span>
                   <Settings />
-                  <span>Settings</span>
+                  <span>Configurações</span>
                 </span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
             <Link href="/help" passHref>
-              <SidebarMenuButton asChild tooltip="Help">
+              <SidebarMenuButton asChild tooltip="Ajuda">
                 <span>
                   <HelpCircle />
-                  <span>Help</span>
+                  <span>Ajuda</span>
                 </span>
               </SidebarMenuButton>
             </Link>

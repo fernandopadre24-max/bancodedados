@@ -15,14 +15,14 @@ import { Badge } from '@/components/ui/badge';
 import { AlertCircle } from 'lucide-react';
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'BRL',
   }).format(amount);
 };
 
 const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('en-US', {
+  return new Intl.DateTimeFormat('pt-BR', {
     year: 'numeric',
     month: 'long',
     day: 'numeric',
@@ -42,17 +42,17 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
   return (
     <Card>
         <CardHeader>
-            <CardTitle className="font-headline">Your Subscriptions</CardTitle>
-            <CardDescription>A list of all your recurring subscriptions and their upcoming billing dates.</CardDescription>
+            <CardTitle className="font-headline">Suas Assinaturas</CardTitle>
+            <CardDescription>Uma lista de todas as suas assinaturas recorrentes e suas próximas datas de cobrança.</CardDescription>
         </CardHeader>
         <CardContent>
             <Table>
                 <TableHeader>
                     <TableRow>
-                    <TableHead>Name</TableHead>
-                    <TableHead>Billing Cycle</TableHead>
-                    <TableHead>Next Payment</TableHead>
-                    <TableHead className="text-right">Amount</TableHead>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Ciclo de Cobrança</TableHead>
+                    <TableHead>Próximo Pagamento</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -72,7 +72,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
                                             {formatDate(sub.nextPaymentDate)}
                                         </span>
                                     </div>
-                                    {isSoon && <p className="text-xs text-muted-foreground">{daysLeft} days left</p>}
+                                    {isSoon && <p className="text-xs text-muted-foreground">{daysLeft} dias restantes</p>}
                                 </TableCell>
                                 <TableCell className="text-right font-semibold">
                                     {formatCurrency(sub.amount)}

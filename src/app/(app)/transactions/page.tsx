@@ -3,7 +3,7 @@ import { PageHeader } from "@/components/shared/page-header"
 import TransactionsClient from "@/components/transactions/transactions-client"
 
 export const metadata = {
-  title: "Transactions | ContaSimples",
+  title: "Transações | ContaSimples",
 };
 
 export default function TransactionsPage() {

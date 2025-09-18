@@ -14,19 +14,19 @@ import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Progress } from '@/components/ui/progress';
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'BRL',
   }).format(amount);
 };
 
 const chartConfig = {
   income: {
-    label: 'Income',
+    label: 'Renda',
     color: 'hsl(var(--chart-1))',
   },
   expenses: {
-    label: 'Expenses',
+    label: 'Despesas',
     color: 'hsl(var(--chart-2))',
   },
 };
@@ -36,7 +36,7 @@ export default function ReportsClient({ transactions, budgets }: { transactions:
     const dataByMonth: { [key: string]: { income: number; expenses: number } } = {};
     
     transactions.forEach(t => {
-      const month = new Date(t.date).toLocaleString('default', { month: 'short', year: '2-digit' });
+      const month = new Date(t.date).toLocaleString('pt-BR', { month: 'short', year: '2-digit' });
       if (!dataByMonth[month]) {
         dataByMonth[month] = { income: 0, expenses: 0 };
       }
@@ -54,8 +54,8 @@ export default function ReportsClient({ transactions, budgets }: { transactions:
     <div className="grid gap-6">
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Income vs. Expenses</CardTitle>
-          <CardDescription>A monthly breakdown of your cash flow.</CardDescription>
+          <CardTitle className="font-headline">Renda vs. Despesas</CardTitle>
+          <CardDescription>Uma análise mensal do seu fluxo de caixa.</CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={chartConfig} className="h-[300px] w-full">
@@ -91,8 +91,8 @@ export default function ReportsClient({ transactions, budgets }: { transactions:
 
       <Card>
         <CardHeader>
-          <CardTitle className="font-headline">Budget Status</CardTitle>
-          <CardDescription>Your current spending against your monthly budgets.</CardDescription>
+          <CardTitle className="font-headline">Status do Orçamento</CardTitle>
+          <CardDescription>Seus gastos atuais em relação aos seus orçamentos mensais.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {budgets.map((budget) => {
@@ -112,7 +112,7 @@ export default function ReportsClient({ transactions, budgets }: { transactions:
                   <div className="text-right">
                     <p className="font-semibold">{formatCurrency(budget.spent)} / {formatCurrency(budget.amount)}</p>
                     <p className={`text-sm ${remaining < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
-                        {remaining >= 0 ? `${formatCurrency(remaining)} left` : `${formatCurrency(Math.abs(remaining))} over`}
+                        {remaining >= 0 ? `${formatCurrency(remaining)} restantes` : `${formatCurrency(Math.abs(remaining))} excedidos`}
                     </p>
                   </div>
                 </div>

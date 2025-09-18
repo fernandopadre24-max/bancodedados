@@ -20,9 +20,9 @@ import { useToast } from '@/hooks/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 const formatCurrency = (amount: number) => {
-  return new Intl.NumberFormat('en-US', {
+  return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
-    currency: 'USD',
+    currency: 'BRL',
   }).format(amount)
 }
 
@@ -45,7 +45,7 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
       const suggestions = await suggestRealisticBudgets({
         historicalSpendingData,
         income,
-        contextRequests: ['I want to save more money', 'Account for inflation'],
+        contextRequests: ['Quero economizar mais dinheiro', 'Leve em conta a inflação'],
       })
       setSuggestedBudgets(suggestions)
       setIsDialogOpen(true)
@@ -53,8 +53,8 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
       console.error('AI suggestion failed:', error)
       toast({
         variant: "destructive",
-        title: "AI Suggestion Failed",
-        description: "Could not get budget suggestions at this time. Please try again later.",
+        title: "Falha na Sugestão de IA",
+        description: "Não foi possível obter sugestões de orçamento no momento. Por favor, tente novamente mais tarde.",
       })
     } finally {
       setIsSuggesting(false)
@@ -76,8 +76,8 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
     setIsDialogOpen(false);
     setSuggestedBudgets(null);
     toast({
-        title: "Budgets Updated",
-        description: "Your budgets have been updated with AI suggestions.",
+        title: "Orçamentos Atualizados",
+        description: "Seus orçamentos foram atualizados com as sugestões da IA.",
     })
   }
 
@@ -90,7 +90,7 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
           ) : (
             <Wand2 className="mr-2 h-4 w-4" />
           )}
-          Suggest with AI
+          Sugerir com IA
         </Button>
       </div>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -114,7 +114,7 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
                     {budget.category}
                   </CardTitle>
                   <CardDescription>
-                    {formatCurrency(budget.amount)} / month
+                    {formatCurrency(budget.amount)} / mês
                   </CardDescription>
                 </div>
                 <div
@@ -132,11 +132,11 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
               <CardContent>
                 <Progress value={progress} indicatorClassName={progressColor} />
                 <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-                  <span>Spent: {formatCurrency(budget.spent)}</span>
+                  <span>Gasto: {formatCurrency(budget.spent)}</span>
                   <span>
                     {remaining >= 0
-                      ? `Remaining: ${formatCurrency(remaining)}`
-                      : `Overspent: ${formatCurrency(Math.abs(remaining))}`}
+                      ? `Restante: ${formatCurrency(remaining)}`
+                      : `Excedido: ${formatCurrency(Math.abs(remaining))}`}
                   </span>
                 </div>
               </CardContent>
@@ -148,18 +148,18 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-                <Wand2 className="text-primary"/> AI Budget Suggestions
+                <Wand2 className="text-primary"/> Sugestões de Orçamento com IA
             </DialogTitle>
             <DialogDescription>
-              Based on your spending, here are some realistic budget suggestions.
+              Com base em seus gastos, aqui estão algumas sugestões de orçamento realistas.
             </DialogDescription>
           </DialogHeader>
           {suggestedBudgets && (
              <div className="space-y-4 py-4">
                 <Alert>
-                    <AlertTitle>Expert Analysis</AlertTitle>
+                    <AlertTitle>Análise de Especialista</AlertTitle>
                     <AlertDescription>
-                        These suggestions aim to balance your current lifestyle while identifying areas for potential savings.
+                        Essas sugestões visam equilibrar seu estilo de vida atual, identificando áreas para economia potencial.
                     </AlertDescription>
                 </Alert>
                 <div className="space-y-2">
@@ -185,10 +185,10 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
              </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
             <Button onClick={applySuggestions}>
                 <Check className="mr-2 h-4 w-4" />
-                Apply Suggestions
+                Aplicar Sugestões
             </Button>
           </DialogFooter>
         </DialogContent>

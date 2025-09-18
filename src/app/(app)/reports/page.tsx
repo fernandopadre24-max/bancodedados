@@ -3,15 +3,15 @@ import { PageHeader } from "@/components/shared/page-header"
 import ReportsClient from "@/components/reports/reports-client"
 
 export const metadata = {
-  title: "Reports | ContaSimples",
+  title: "Relatórios | ContaSimples",
 };
 
 export default function ReportsPage() {
   return (
     <>
       <PageHeader
-        title="Financial Reports"
-        description="Analyze your financial health over time."
+        title="Relatórios Financeiros"
+        description="Analise sua saúde financeira ao longo do tempo."
       />
       <ReportsClient transactions={transactions} budgets={budgets} />
     </>

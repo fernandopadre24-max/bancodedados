@@ -3,15 +3,15 @@ import { PageHeader } from "@/components/shared/page-header"
 import DashboardClient from "@/components/dashboard/dashboard-client"
 
 export const metadata = {
-  title: "Dashboard | ContaSimples",
+  title: "Painel | ContaSimples",
 };
 
 export default function DashboardPage() {
   return (
     <>
       <PageHeader
-        title="Welcome Back!"
-        description="Here's a snapshot of your financial health."
+        title="Bem-vindo de volta!"
+        description="Aqui está um resumo da sua saúde financeira."
       />
       <DashboardClient 
         transactions={transactions} 
