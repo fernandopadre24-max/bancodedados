@@ -2,13 +2,16 @@
 'use client';
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import type { Transaction, Budget, SavingsGoal, Subscription } from '@/lib/types';
+import type { Transaction, Budget, SavingsGoal, Subscription, Category } from '@/lib/types';
 import { 
     transactions as initialTransactions, 
     budgets as initialBudgets, 
     savingsGoals as initialSavingsGoals,
     subscriptions as initialSubscriptions 
 } from '@/lib/data';
+import { categoryIcons } from '@/lib/icons';
+
+const initialCategories = Object.keys(categoryIcons) as Category[];
 
 interface DataContextType {
   transactions: Transaction[];
@@ -19,6 +22,8 @@ interface DataContextType {
   setSavingsGoals: React.Dispatch<React.SetStateAction<SavingsGoal[]>>;
   subscriptions: Subscription[];
   setSubscriptions: React.Dispatch<React.SetStateAction<Subscription[]>>;
+  categories: Category[];
+  addCategory: (category: Category) => void;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
   deleteTransaction: (id: string) => void;
   addSavingsGoal: (goal: Omit<SavingsGoal, 'id'>) => void;
@@ -38,6 +43,13 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [budgets, setBudgets] = useState(initialBudgets);
   const [savingsGoals, setSavingsGoals] = useState(initialSavingsGoals);
   const [subscriptions, setSubscriptions] = useState(initialSubscriptions);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+
+  const addCategory = (category: Category) => {
+    if (!categories.includes(category)) {
+      setCategories(prev => [...prev, category]);
+    }
+  };
 
   const addTransaction = (transaction: Omit<Transaction, 'id' | 'date'>) => {
     setTransactions(prev => [{...transaction, id: Date.now().toString(), date: new Date()}, ...prev]);
@@ -97,6 +109,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSavingsGoals,
     subscriptions,
     setSubscriptions,
+    categories,
+    addCategory,
     addTransaction,
     deleteTransaction,
     addSavingsGoal,

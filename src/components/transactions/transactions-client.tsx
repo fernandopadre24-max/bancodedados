@@ -43,7 +43,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { categoryIcons } from '@/lib/icons';
-import { PlusCircle, Pencil, Trash2 } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Tag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -61,7 +61,7 @@ import { useData } from '@/context/DataContext';
 const transactionSchema = z.object({
   description: z.string().min(1, 'A descrição é obrigatória'),
   amount: z.coerce.number().positive('O valor deve ser positivo'),
-  category: z.enum(['Alimentação', 'Transporte', 'Moradia', 'Entretenimento', 'Saúde', 'Compras', 'Serviços', 'Renda']),
+  category: z.string().min(1, 'A categoria é obrigatória.'),
   type: z.enum(['income', 'expense']),
 });
 
@@ -80,8 +80,8 @@ const formatDate = (date: Date) => {
     }).format(date);
 };
 
-export default function TransactionsClient({ initialTransactions }: { initialTransactions: Transaction[] }) {
-  const { transactions, addTransaction, deleteTransaction } = useData();
+export default function TransactionsClient() {
+  const { transactions, addTransaction, deleteTransaction, categories } = useData();
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
 
@@ -190,7 +190,7 @@ export default function TransactionsClient({ initialTransactions }: { initialTra
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            {Object.keys(categoryIcons).map((cat) => (
+                            {categories.map((cat) => (
                               <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                             ))}
                           </SelectContent>
@@ -221,7 +221,7 @@ export default function TransactionsClient({ initialTransactions }: { initialTra
           </TableHeader>
           <TableBody>
             {transactions.map((transaction) => {
-              const Icon = categoryIcons[transaction.category];
+              const Icon = categoryIcons[transaction.category as keyof typeof categoryIcons] || Tag;
               return (
                 <TableRow key={transaction.id}>
                   <TableCell>{formatDate(transaction.date)}</TableCell>

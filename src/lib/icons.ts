@@ -1,7 +1,7 @@
-import { Utensils, Car, Home, Film, HeartPulse, ShoppingCart, Lightbulb, DollarSign } from 'lucide-react';
-import type { CategoryIconMap } from './types';
+import { Utensils, Car, Home, Film, HeartPulse, ShoppingCart, Lightbulb, DollarSign, Tag } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 
-export const categoryIcons: CategoryIconMap = {
+export const categoryIcons: { [key: string]: LucideIcon } = {
   'Alimentação': Utensils,
   'Transporte': Car,
   'Moradia': Home,
@@ -10,4 +10,5 @@ export const categoryIcons: CategoryIconMap = {
   'Compras': ShoppingCart,
   'Serviços': Lightbulb,
   'Renda': DollarSign,
+  'default': Tag,
 };

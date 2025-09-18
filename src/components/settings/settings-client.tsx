@@ -1,3 +1,4 @@
+
 'use client'
 
 import React from 'react'
@@ -18,14 +19,51 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Palette, Bell, CreditCard, Lock, AppWindow } from 'lucide-react'
+import { Palette, Bell, CreditCard, Lock, AppWindow, FolderPlus, Tag } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
 import { useAppContext } from '@/context/AppContext'
 import { Input } from '../ui/input'
+import { useData } from '@/context/DataContext'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+  } from '@/components/ui/dialog';
+  import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+  } from '@/components/ui/form';
+import { useToast } from '@/hooks/use-toast'
+import { Badge } from '../ui/badge'
+
+const categorySchema = z.object({
+    name: z.string().min(2, 'O nome da categoria é obrigatório.'),
+  });
 
 export default function SettingsClient() {
   const [theme, setTheme] = React.useState('system')
   const { appTitle, setAppTitle } = useAppContext();
+  const { categories, addCategory } = useData();
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = React.useState(false);
+  const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof categorySchema>>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: {
+        name: '',
+    }
+  });
 
   React.useEffect(() => {
     const root = window.document.documentElement
@@ -39,6 +77,16 @@ export default function SettingsClient() {
         else root.classList.remove('dark')
     }
   }, [theme])
+
+  function onCategorySubmit(values: z.infer<typeof categorySchema>) {
+    addCategory(values.name);
+    toast({
+        title: "Categoria Adicionada",
+        description: `A categoria "${values.name}" foi adicionada.`,
+    })
+    form.reset();
+    setIsCategoryDialogOpen(false);
+  }
 
   return (
     <div className="grid gap-6">
@@ -88,6 +136,67 @@ export default function SettingsClient() {
               </SelectContent>
             </Select>
           </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+            <div className='flex items-center justify-between'>
+                <div>
+                    <CardTitle className="flex items-center gap-2">
+                        <Tag className="h-5 w-5" />
+                        Categorias de Transações
+                    </CardTitle>
+                    <CardDescription>
+                        Gerencie suas categorias para receitas e despesas.
+                    </CardDescription>
+                </div>
+                <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="outline" size="sm">
+                            <FolderPlus className="mr-2 h-4 w-4" />
+                            Nova Categoria
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Nova Categoria</DialogTitle>
+                            <DialogDescription>
+                                Adicione uma nova categoria para organizar suas transações.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <Form {...form}>
+                            <form onSubmit={form.handleSubmit(onCategorySubmit)} className="space-y-4">
+                                <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                    <FormItem>
+                                    <FormLabel>Nome da Categoria</FormLabel>
+                                    <FormControl>
+                                        <Input placeholder="ex: Educação" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                    </FormItem>
+                                )}
+                                />
+                                <DialogFooter>
+                                <Button type="submit">Criar Categoria</Button>
+                                </DialogFooter>
+                            </form>
+                        </Form>
+                    </DialogContent>
+                </Dialog>
+            </div>
+        </CardHeader>
+        <CardContent>
+            <div className="flex flex-wrap gap-2">
+                {categories.map((category) => (
+                    <Badge key={category} variant="secondary" className='text-sm'>
+                        {category}
+                    </Badge>
+                ))}
+            </div>
         </CardContent>
       </Card>
 

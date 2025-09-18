@@ -1,6 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 
-export type Category = 'Alimentação' | 'Transporte' | 'Moradia' | 'Entretenimento' | 'Saúde' | 'Compras' | 'Serviços' | 'Renda';
+export type Category = string;
 
 export type Transaction = {
   id: string;
