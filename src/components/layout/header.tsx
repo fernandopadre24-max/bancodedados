@@ -34,18 +34,18 @@ export default function AppHeader() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <Link href="/profile" passHref legacyBehavior>
-                <DropdownMenuItem as="a">
+            <DropdownMenuItem asChild>
+                <Link href="/profile" passHref>
                     <User className="mr-2 h-4 w-4" />
                     <span>Perfil</span>
-                </DropdownMenuItem>
-            </Link>
-            <Link href="/settings" passHref legacyBehavior>
-                <DropdownMenuItem as="a">
+                </Link>
+            </DropdownMenuItem>
+            <DropdownMenuItem asChild>
+                <Link href="/settings" passHref>
                     <Settings className="mr-2 h-4 w-4" />
                     <span>Configurações</span>
-                </DropdownMenuItem>
-            </Link>
+                </Link>
+            </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
               <LogOut className="mr-2 h-4 w-4" />
