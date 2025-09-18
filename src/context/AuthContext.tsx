@@ -50,18 +50,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // This logic now supports both real Firebase and mock user based on path
-    const isAuthPage = ['/login', '/signup', '/forgot-password'].includes(window.location.pathname);
-    
-    // On initial load, if there's a stored session, use it.
-    const sessionUser = sessionStorage.getItem('user');
-
-    if (sessionUser) {
-        setUser(JSON.parse(sessionUser));
-    } else if (isAuthPage) {
-        setUser(null);
+    // This effect ensures that the user state is initialized correctly from sessionStorage.
+    try {
+        const sessionUser = sessionStorage.getItem('user');
+        if (sessionUser) {
+            setUser(JSON.parse(sessionUser));
+        }
+    } catch (error) {
+        console.error("Failed to parse user from sessionStorage", error);
+        sessionStorage.removeItem('user');
     }
-    
     setLoading(false);
 
     // Note: Firebase onAuthStateChanged logic would go here for a real implementation
@@ -70,18 +68,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = () => {
-    const useFirebaseAuth = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'FIREBASE_API_KEY_PLACEHOLDER';
-    if (!useFirebaseAuth) {
-        sessionStorage.setItem('user', JSON.stringify(mockUser));
-        setUser(mockUser);
-    }
-    // In a real app, you would handle Firebase login here
+    sessionStorage.setItem('user', JSON.stringify(mockUser));
+    setUser(mockUser);
   };
 
   const logout = () => {
     sessionStorage.removeItem('user');
     setUser(null);
-    // In a real app, you would handle Firebase logout here (signOut(auth))
   };
 
   return (
