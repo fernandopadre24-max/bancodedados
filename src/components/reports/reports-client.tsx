@@ -13,12 +13,31 @@ import {
 import { Bar, BarChart, XAxis, YAxis, CartesianGrid } from 'recharts';
 import { Progress } from '@/components/ui/progress';
 import { useData } from '@/context/DataContext';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { cn } from '@/lib/utils';
+import { Package, PackageOpen } from 'lucide-react';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL',
   }).format(amount);
+};
+
+const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+    }).format(new Date(date));
 };
 
 const chartConfig = {
@@ -33,7 +52,7 @@ const chartConfig = {
 };
 
 export default function ReportsClient() {
-  const { transactions, budgets } = useData();
+  const { transactions, budgets, bills } = useData();
 
   const chartData = React.useMemo(() => {
     const dataByMonth: { [key: string]: { income: number; expenses: number } } = {};
@@ -125,6 +144,54 @@ export default function ReportsClient() {
           })}
         </CardContent>
       </Card>
+
+      <Card>
+        <CardHeader>
+            <CardTitle className="font-headline">Relatório de Contas</CardTitle>
+            <CardDescription>Um resumo de suas contas a pagar e receber.</CardDescription>
+        </CardHeader>
+        <CardContent>
+            <Table>
+                <TableHeader>
+                    <TableRow>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Descrição</TableHead>
+                    <TableHead>Vencimento</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead className="text-right">Valor</TableHead>
+                    </TableRow>
+                </TableHeader>
+                <TableBody>
+                    {bills.map((bill) => {
+                        const isPaid = bill.status === 'paid';
+                        
+                        return (
+                            <TableRow key={bill.id} className={cn(isPaid ? 'text-muted-foreground' : '')}>
+                                <TableCell>
+                                    <Badge variant={isPaid ? 'default' : 'secondary'} className={cn(isPaid && 'bg-green-600')}>
+                                        {isPaid ? 'Paga' : 'Pendente'}
+                                    </Badge>
+                                </TableCell>
+                                <TableCell className="font-medium">{bill.description}</TableCell>
+                                <TableCell>
+                                    {formatDate(bill.dueDate)}
+                                </TableCell>
+                                <TableCell>
+                                   <div className='flex items-center gap-2'>
+                                    {bill.type === 'payable' ? <Package className='text-red-500'/> : <PackageOpen className='text-green-500'/>}
+                                    <span className="capitalize">{bill.type === 'payable' ? 'A Pagar' : 'A Receber'}</span>
+                                   </div>
+                                </TableCell>
+                                <TableCell className={cn("text-right font-semibold", bill.type === 'payable' ? 'text-red-600' : 'text-green-600' )}>
+                                    {formatCurrency(bill.amount)}
+                                </TableCell>
+                            </TableRow>
+                        )
+                    })}
+                </TableBody>
+            </Table>
+      </CardContent>
+    </Card>
     </div>
   );
 }
