@@ -1,3 +1,4 @@
+
 "use client"
 
 import * as React from "react"
@@ -79,11 +80,8 @@ const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
   React.ComponentPropsWithoutRef<typeof DropdownMenuPrimitive.Item> & {
     inset?: boolean
-    asChild?: boolean
   }
->(({ className, inset, asChild, ...props }, ref) => {
-  const Comp = asChild ? Slot : 'div';
-  return (
+>(({ className, inset, ...props }, ref) => (
     <DropdownMenuPrimitive.Item
       ref={ref}
       className={cn(
@@ -92,11 +90,8 @@ const DropdownMenuItem = React.forwardRef<
         className
       )}
       {...props}
-    >
-      <Comp>{props.children}</Comp>
-    </DropdownMenuPrimitive.Item>
-  )
-});
+    />
+));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName
 
 const DropdownMenuCheckboxItem = React.forwardRef<

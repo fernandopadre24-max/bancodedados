@@ -1,3 +1,4 @@
+
 'use client';
 
 import React from 'react';
@@ -51,9 +52,8 @@ export default function AppSidebar() {
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref legacyBehavior>
+              <Link href={item.href}>
                 <SidebarMenuButton
-                  as="a"
                   isActive={pathname.startsWith(item.href)}
                   tooltip={item.label}
                 >
@@ -68,9 +68,8 @@ export default function AppSidebar() {
       <SidebarFooter className="p-2">
         <SidebarMenu>
             <SidebarMenuItem>
-                <Link href="/profile" passHref legacyBehavior>
+                <Link href="/profile">
                     <SidebarMenuButton
-                    as="a"
                     isActive={pathname === '/profile'}
                     tooltip="Perfil"
                     >
@@ -80,9 +79,8 @@ export default function AppSidebar() {
                 </Link>
             </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/settings" passHref legacyBehavior>
+            <Link href="/settings">
               <SidebarMenuButton
-                as="a"
                 isActive={pathname === '/settings'}
                 tooltip="Configurações"
               >
@@ -92,8 +90,8 @@ export default function AppSidebar() {
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/help" passHref legacyBehavior>
-              <SidebarMenuButton as="a" tooltip="Ajuda">
+            <Link href="/help">
+              <SidebarMenuButton tooltip="Ajuda">
                 <HelpCircle />
                 <span>Ajuda</span>
               </SidebarMenuButton>
