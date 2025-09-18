@@ -1,5 +1,4 @@
 
-import { transactions } from "@/lib/data"
 import TransactionsClient from "@/components/transactions/transactions-client"
 
 export const metadata = {
@@ -11,7 +10,7 @@ export default function TransactionsPage() {
   // The actual data will be managed by DataContext in TransactionsClient.
   return (
     <>
-      <TransactionsClient initialTransactions={transactions} />
+      <TransactionsClient />
     </>
   )
 }

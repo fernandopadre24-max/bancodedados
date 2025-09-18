@@ -39,18 +39,27 @@ const formatCurrency = (amount: number) => {
   }).format(amount)
 }
 
-interface BudgetsClientProps {
-  initialBudgets: Budget[]
-  historicalSpendingData: Record<string, number>
-  income: number
-}
-
-export default function BudgetsClient({ initialBudgets, historicalSpendingData, income }: BudgetsClientProps) {
-  const { budgets, deleteBudget, applyBudgetSuggestions } = useData();
+export default function BudgetsClient() {
+  const { budgets, deleteBudget, applyBudgetSuggestions, transactions } = useData();
   const [isSuggesting, setIsSuggesting] = React.useState(false)
   const [suggestedBudgets, setSuggestedBudgets] = React.useState<SuggestRealisticBudgetsOutput | null>(null)
   const [isDialogOpen, setIsDialogOpen] = React.useState(false)
   const { toast } = useToast();
+
+  const { historicalSpendingData, income } = React.useMemo(() => {
+    const historicalSpending = transactions.reduce((acc, t) => {
+      if (t.type === 'expense') {
+          const categoryKey = t.category.toLowerCase().replace(' ', '');
+          acc[categoryKey] = (acc[categoryKey] || 0) + t.amount;
+      }
+      return acc;
+    }, {} as Record<string, number>);
+  
+    const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+
+    return { historicalSpendingData: historicalSpending, income };
+  }, [transactions]);
+
 
   const handleSuggestBudgets = async () => {
     setIsSuggesting(true)

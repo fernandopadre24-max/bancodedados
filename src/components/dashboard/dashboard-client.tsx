@@ -202,10 +202,3 @@ export default function DashboardClient({}: DashboardClientProps) {
     </div>
   )
 }
-
-// Add this to Progress component to allow custom indicator color
-declare module "@/components/ui/progress" {
-    interface ProgressProps {
-        indicatorClassName?: string
-    }
-}
