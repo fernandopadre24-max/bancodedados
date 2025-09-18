@@ -43,7 +43,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { categoryIcons } from '@/lib/icons';
-import { PlusCircle, Pencil, Trash2, Tag } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Tag, FolderPlus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -65,6 +65,10 @@ const transactionSchema = z.object({
   type: z.enum(['income', 'expense']),
 });
 
+const categorySchema = z.object({
+    name: z.string().min(2, 'O nome da categoria é obrigatório.'),
+});
+
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -81,26 +85,43 @@ const formatDate = (date: Date) => {
 };
 
 export default function TransactionsClient() {
-  const { transactions, addTransaction, deleteTransaction, categories } = useData();
-  const [open, setOpen] = React.useState(false);
+  const { transactions, addTransaction, deleteTransaction, categories, addCategory } = useData();
+  const [isTransactionDialogOpen, setIsTransactionDialogOpen] = React.useState(false);
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = React.useState(false);
   const { toast } = useToast();
 
-  const form = useForm<z.infer<typeof transactionSchema>>({
+  const transactionForm = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: 'expense',
     },
   });
 
-  function onSubmit(values: z.infer<typeof transactionSchema>) {
+  const categoryForm = useForm<z.infer<typeof categorySchema>>({
+    resolver: zodResolver(categorySchema),
+    defaultValues: { name: '' },
+  });
+
+  function onTransactionSubmit(values: z.infer<typeof transactionSchema>) {
     addTransaction(values);
     toast({
         title: "Transação Adicionada",
         description: `${values.description} foi adicionado às suas transações.`,
     })
-    form.reset();
-    setOpen(false);
+    transactionForm.reset();
+    setIsTransactionDialogOpen(false);
   }
+
+  function onCategorySubmit(values: z.infer<typeof categorySchema>) {
+    addCategory(values.name);
+    toast({
+        title: "Categoria Adicionada",
+        description: `A categoria "${values.name}" foi adicionada.`,
+    })
+    categoryForm.reset();
+    setIsCategoryDialogOpen(false);
+  }
+
 
   function handleDeleteTransaction(transactionId: string) {
     deleteTransaction(transactionId);
@@ -113,7 +134,43 @@ export default function TransactionsClient() {
   return (
     <>
       <PageHeader title="Transações" description="Veja e gerencie suas receitas e despesas.">
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+            <DialogTrigger asChild>
+                <Button variant="outline">
+                    <FolderPlus className="mr-2 h-4 w-4" />
+                    Gerenciar Categorias
+                </Button>
+            </DialogTrigger>
+            <DialogContent>
+                <DialogHeader>
+                    <DialogTitle>Nova Categoria</DialogTitle>
+                    <DialogDescription>
+                        Adicione uma nova categoria para organizar suas transações.
+                    </DialogDescription>
+                </DialogHeader>
+                <Form {...categoryForm}>
+                    <form onSubmit={categoryForm.handleSubmit(onCategorySubmit)} className="space-y-4">
+                        <FormField
+                        control={categoryForm.control}
+                        name="name"
+                        render={({ field }) => (
+                            <FormItem>
+                            <FormLabel>Nome da Categoria</FormLabel>
+                            <FormControl>
+                                <Input placeholder="ex: Educação" {...field} />
+                            </FormControl>
+                            <FormMessage />
+                            </FormItem>
+                        )}
+                        />
+                        <DialogFooter>
+                            <Button type="submit">Criar Categoria</Button>
+                        </DialogFooter>
+                    </form>
+                </Form>
+            </DialogContent>
+        </Dialog>
+        <Dialog open={isTransactionDialogOpen} onOpenChange={setIsTransactionDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <PlusCircle className="mr-2 h-4 w-4" />
@@ -127,10 +184,10 @@ export default function TransactionsClient() {
                 Registre uma nova receita ou despesa para manter suas finanças atualizadas.
               </DialogDescription>
             </DialogHeader>
-            <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <Form {...transactionForm}>
+              <form onSubmit={transactionForm.handleSubmit(onTransactionSubmit)} className="space-y-4">
                 <FormField
-                  control={form.control}
+                  control={transactionForm.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
@@ -143,7 +200,7 @@ export default function TransactionsClient() {
                   )}
                 />
                 <FormField
-                  control={form.control}
+                  control={transactionForm.control}
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
@@ -157,7 +214,7 @@ export default function TransactionsClient() {
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
-                    control={form.control}
+                    control={transactionForm.control}
                     name="type"
                     render={({ field }) => (
                       <FormItem>
@@ -178,7 +235,7 @@ export default function TransactionsClient() {
                     )}
                   />
                   <FormField
-                    control={form.control}
+                    control={transactionForm.control}
                     name="category"
                     render={({ field }) => (
                       <FormItem>
@@ -279,3 +336,5 @@ export default function TransactionsClient() {
     </>
   );
 }
+
+    
