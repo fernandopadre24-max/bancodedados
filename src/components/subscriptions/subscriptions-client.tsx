@@ -95,21 +95,28 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
   });
   
   React.useEffect(() => {
-    if (editingSubscription) {
+    if (isEditDialogOpen && editingSubscription) {
         form.reset({
             name: editingSubscription.name,
             amount: editingSubscription.amount,
             billingCycle: editingSubscription.billingCycle,
-            nextPaymentDate: editingSubscription.nextPaymentDate
+            nextPaymentDate: new Date(editingSubscription.nextPaymentDate)
         });
     } else {
         form.reset({ name: '', amount: 0, billingCycle: 'mensal', nextPaymentDate: new Date()});
     }
-  }, [editingSubscription, form]);
+  }, [isEditDialogOpen, editingSubscription, form]);
 
   function handleOpenEditDialog(subscription: Subscription) {
     setEditingSubscription(subscription);
     setIsEditDialogOpen(true);
+  }
+
+  function handleCloseDialogs() {
+    setIsAddDialogOpen(false);
+    setIsEditDialogOpen(false);
+    setEditingSubscription(null);
+    form.reset();
   }
 
   function onAddSubmit(values: z.infer<typeof subscriptionSchema>) {
@@ -122,8 +129,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
         title: "Assinatura Adicionada",
         description: `A assinatura "${values.name}" foi adicionada com sucesso.`,
     });
-    form.reset();
-    setIsAddDialogOpen(false);
+    handleCloseDialogs();
   }
   
   function onEditSubmit(values: z.infer<typeof subscriptionSchema>) {
@@ -139,9 +145,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
         title: "Assinatura Atualizada",
         description: `A assinatura "${values.name}" foi atualizada com sucesso.`,
     });
-    setEditingSubscription(null);
-    setIsEditDialogOpen(false);
-    form.reset();
+    handleCloseDialogs();
   }
 
 
@@ -257,6 +261,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
             />
         </div>
         <DialogFooter>
+            <Button variant="outline" onClick={handleCloseDialogs}>Cancelar</Button>
             <Button type="submit">{editingSubscription ? 'Salvar Alterações' : 'Criar Assinatura'}</Button>
         </DialogFooter>
         </form>
@@ -268,7 +273,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
     <div className="flex justify-end mb-4">
         <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => { setEditingSubscription(null); form.reset(); }}>
                 <PlusCircle className="mr-2 h-4 w-4" />
                 Adicionar Assinatura
             </Button>

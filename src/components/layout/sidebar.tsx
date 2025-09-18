@@ -65,7 +65,11 @@ export default function AppSidebar() {
         <SidebarMenu>
           <SidebarMenuItem>
             <Link href="/settings" passHref>
-              <SidebarMenuButton asChild tooltip="Configurações">
+              <SidebarMenuButton
+                asChild
+                isActive={pathname === '/settings'}
+                tooltip="Configurações"
+              >
                 <span>
                   <Settings />
                   <span>Configurações</span>
