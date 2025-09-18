@@ -18,11 +18,14 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
-import { Palette, Bell, CreditCard, Lock } from 'lucide-react'
+import { Palette, Bell, CreditCard, Lock, AppWindow } from 'lucide-react'
 import { Separator } from '@/components/ui/separator'
+import { useAppContext } from '@/context/AppContext'
+import { Input } from '../ui/input'
 
 export default function SettingsClient() {
   const [theme, setTheme] = React.useState('system')
+  const { appTitle, setAppTitle } = useAppContext();
 
   React.useEffect(() => {
     const root = window.document.documentElement
@@ -39,6 +42,28 @@ export default function SettingsClient() {
 
   return (
     <div className="grid gap-6">
+       <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <AppWindow className="h-5 w-5" />
+            Aplicativo
+          </CardTitle>
+          <CardDescription>
+            Personalize as configurações gerais do aplicativo.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="app-title">Título do Aplicativo</Label>
+            <Input 
+                id="app-title"
+                value={appTitle}
+                onChange={(e) => setAppTitle(e.target.value)}
+                className="w-[180px]"
+            />
+          </div>
+        </CardContent>
+      </Card>
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">

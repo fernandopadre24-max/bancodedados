@@ -1,5 +1,6 @@
 'use client';
 
+import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
@@ -22,6 +23,7 @@ import {
   Settings,
   HelpCircle,
 } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
 
 const menuItems = [
   { href: '/dashboard', label: 'Painel', icon: LayoutDashboard },
@@ -34,12 +36,13 @@ const menuItems = [
 
 export default function AppSidebar() {
   const pathname = usePathname();
+  const { appTitle } = useAppContext();
 
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader className="items-center justify-center text-primary">
         <Gem className="w-6 h-6" />
-        <span className="text-xl font-semibold font-headline">ContaSimples</span>
+        <span className="text-xl font-semibold font-headline">{appTitle}</span>
       </SidebarHeader>
       <SidebarContent className="p-2">
         <SidebarMenu>
