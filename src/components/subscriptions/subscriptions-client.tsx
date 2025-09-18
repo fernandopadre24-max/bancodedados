@@ -12,7 +12,20 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle } from 'lucide-react';
+import { AlertCircle, Pencil, Trash2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -31,6 +44,7 @@ const formatDate = (date: Date) => {
 
 export default function SubscriptionsClient({ initialSubscriptions }: { initialSubscriptions: Subscription[] }) {
   const [subscriptions, setSubscriptions] = React.useState(initialSubscriptions);
+  const { toast } = useToast();
 
   const getDaysUntilNextPayment = (date: Date) => {
     const today = new Date();
@@ -38,6 +52,14 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
     const diffTime = nextPayment.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
+
+  function handleDeleteSubscription(subscriptionId: string) {
+    setSubscriptions(subscriptions.filter(s => s.id !== subscriptionId));
+    toast({
+        title: "Assinatura Removida",
+        description: "A assinatura foi removida com sucesso.",
+    });
+  }
   
   return (
     <Card>
@@ -53,6 +75,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
                     <TableHead>Ciclo de Cobrança</TableHead>
                     <TableHead>Próximo Pagamento</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
+                    <TableHead className="w-[100px]">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -76,6 +99,36 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
                                 </TableCell>
                                 <TableCell className="text-right font-semibold">
                                     {formatCurrency(sub.amount)}
+                                </TableCell>
+                                <TableCell>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <Pencil className="h-4 w-4" />
+                                            <span className="sr-only">Editar</span>
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                    <Trash2 className="h-4 w-4" />
+                                                    <span className="sr-only">Apagar</span>
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        Essa ação não pode ser desfeita. Isso removerá permanentemente a assinatura.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteSubscription(sub.id)}>
+                                                        Apagar
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         )

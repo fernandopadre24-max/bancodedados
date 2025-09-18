@@ -1,13 +1,13 @@
 'use client'
 
 import React from 'react'
-import type { Budget, Category } from '@/lib/types'
+import type { Budget } from '@/lib/types'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { categoryIcons } from '@/lib/icons'
 import { suggestRealisticBudgets, SuggestRealisticBudgetsOutput } from '@/ai/flows/suggest-realistic-budgets'
 import { Button } from '@/components/ui/button'
-import { Wand2, Loader2, Check } from 'lucide-react'
+import { Wand2, Loader2, Check, Pencil, Trash2 } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -18,6 +18,17 @@ import {
 } from '@/components/ui/dialog'
 import { useToast } from '@/hooks/use-toast'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+  } from "@/components/ui/alert-dialog"
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -81,6 +92,14 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
     })
   }
 
+  function handleDeleteBudget(budgetId: string) {
+    setBudgets(budgets.filter(b => b.id !== budgetId));
+    toast({
+        title: "Orçamento Removido",
+        description: "O orçamento foi removido com sucesso.",
+    });
+  }
+
   return (
     <>
       <div className="flex justify-end mb-4">
@@ -108,7 +127,7 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
           return (
             <Card key={budget.id}>
               <CardHeader className="flex flex-row items-start justify-between">
-                <div>
+                <div className="flex-1">
                   <CardTitle className="font-headline flex items-center gap-2">
                     <Icon className="h-5 w-5 text-muted-foreground" />
                     {budget.category}
@@ -117,19 +136,49 @@ export default function BudgetsClient({ initialBudgets, historicalSpendingData, 
                     {formatCurrency(budget.amount)} / mês
                   </CardDescription>
                 </div>
-                <div
-                  className={`font-semibold ${
-                    progress > 90
-                      ? 'text-red-600'
-                      : progress > 75
-                      ? 'text-yellow-600'
-                      : 'text-primary'
-                  }`}
-                >
-                  {progress.toFixed(0)}%
+                <div className="flex items-center gap-1">
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                        <Pencil className="h-4 w-4" />
+                        <span className="sr-only">Editar</span>
+                    </Button>
+                    <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Trash2 className="h-4 w-4" />
+                                <span className="sr-only">Apagar</span>
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                                <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                    Essa ação não pode ser desfeita. Isso removerá permanentemente o orçamento.
+                                </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                                <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteBudget(budget.id)}>
+                                    Apagar
+                                </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                    </AlertDialog>
                 </div>
               </CardHeader>
               <CardContent>
+                <div className="flex justify-between items-center mb-2">
+                    <div
+                    className={`font-semibold ${
+                        progress > 90
+                        ? 'text-red-600'
+                        : progress > 75
+                        ? 'text-yellow-600'
+                        : 'text-primary'
+                    }`}
+                    >
+                    {progress.toFixed(0)}%
+                    </div>
+                </div>
                 <Progress value={progress} indicatorClassName={progressColor} />
                 <div className="flex justify-between mt-2 text-sm text-muted-foreground">
                   <span>Gasto: {formatCurrency(budget.spent)}</span>
