@@ -1,6 +1,9 @@
 'use client'
 
 import React from 'react';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import * as z from 'zod';
 import type { Subscription } from '@/lib/types';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import {
@@ -12,7 +15,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, Pencil, Trash2 } from 'lucide-react';
+import { AlertCircle, Pencil, Trash2, PlusCircle, CalendarIcon } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     AlertDialog,
@@ -26,6 +29,44 @@ import {
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
 import { useToast } from '@/hooks/use-toast';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+    Form,
+    FormControl,
+    FormField,
+    FormItem,
+    FormLabel,
+    FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { cn } from '@/lib/utils';
+import { format } from "date-fns"
+import { ptBR } from "date-fns/locale"
+
+
+const subscriptionSchema = z.object({
+  name: z.string().min(1, 'O nome da assinatura é obrigatório.'),
+  amount: z.coerce.number().positive('O valor deve ser positivo.'),
+  billingCycle: z.enum(['mensal', 'anual'], { required_error: 'O ciclo de cobrança é obrigatório.'}),
+  nextPaymentDate: z.date({ required_error: 'A data do próximo pagamento é obrigatória.'}),
+});
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -44,11 +85,32 @@ const formatDate = (date: Date) => {
 
 export default function SubscriptionsClient({ initialSubscriptions }: { initialSubscriptions: Subscription[] }) {
   const [subscriptions, setSubscriptions] = React.useState(initialSubscriptions);
+  const [open, setOpen] = React.useState(false);
   const { toast } = useToast();
+
+  const form = useForm<z.infer<typeof subscriptionSchema>>({
+    resolver: zodResolver(subscriptionSchema),
+  });
+
+  function onSubmit(values: z.infer<typeof subscriptionSchema>) {
+    const newSubscription: Subscription = {
+      id: (subscriptions.length + 1).toString(),
+      ...values,
+    };
+    setSubscriptions([...subscriptions, newSubscription].sort((a, b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime()));
+    toast({
+        title: "Assinatura Adicionada",
+        description: `A assinatura "${values.name}" foi adicionada com sucesso.`,
+    });
+    form.reset();
+    setOpen(false);
+  }
 
   const getDaysUntilNextPayment = (date: Date) => {
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const nextPayment = new Date(date);
+    nextPayment.setHours(0, 0, 0, 0);
     const diffTime = nextPayment.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
@@ -62,6 +124,123 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
   }
   
   return (
+    <>
+    <div className="flex justify-end mb-4">
+        <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+            <Button>
+                <PlusCircle className="mr-2 h-4 w-4" />
+                Adicionar Assinatura
+            </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[425px]">
+            <DialogHeader>
+                <DialogTitle>Nova Assinatura</DialogTitle>
+                <DialogDescription>
+                Registre um novo pagamento recorrente.
+                </DialogDescription>
+            </DialogHeader>
+            <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                <FormField
+                    control={form.control}
+                    name="name"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Nome</FormLabel>
+                        <FormControl>
+                        <Input placeholder="ex: Netflix" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <FormField
+                    control={form.control}
+                    name="amount"
+                    render={({ field }) => (
+                    <FormItem>
+                        <FormLabel>Valor</FormLabel>
+                        <FormControl>
+                        <Input type="number" step="0.01" placeholder="15,99" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                    </FormItem>
+                    )}
+                />
+                <div className="grid grid-cols-2 gap-4">
+                    <FormField
+                        control={form.control}
+                        name="billingCycle"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Ciclo de Cobrança</FormLabel>
+                            <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                                <SelectTrigger>
+                                <SelectValue placeholder="Selecione..." />
+                                </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                                <SelectItem value="mensal">Mensal</SelectItem>
+                                <SelectItem value="anual">Anual</SelectItem>
+                            </SelectContent>
+                            </Select>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                    <FormField
+                        control={form.control}
+                        name="nextPaymentDate"
+                        render={({ field }) => (
+                        <FormItem>
+                            <FormLabel>Próximo Pagamento</FormLabel>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-full pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        format(field.value, "PPP", { locale: ptBR })
+                                    ) : (
+                                        <span>Escolha uma data</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                        date < new Date(new Date().setDate(new Date().getDate() - 1))
+                                    }
+                                    initialFocus
+                                    locale={ptBR}
+                                />
+                                </PopoverContent>
+                            </Popover>
+                            <FormMessage />
+                        </FormItem>
+                        )}
+                    />
+                </div>
+                <DialogFooter>
+                    <Button type="submit">Criar Assinatura</Button>
+                </DialogFooter>
+                </form>
+            </Form>
+            </DialogContent>
+        </Dialog>
+    </div>
     <Card>
         <CardHeader>
             <CardTitle className="font-headline">Suas Assinaturas</CardTitle>
@@ -81,9 +260,10 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
                 <TableBody>
                     {subscriptions.map((sub) => {
                         const daysLeft = getDaysUntilNextPayment(sub.nextPaymentDate);
-                        const isSoon = daysLeft <= 7 && daysLeft > 0;
+                        const isSoon = daysLeft <= 7 && daysLeft >= 0;
+                        const isPast = daysLeft < 0;
                         return (
-                            <TableRow key={sub.id}>
+                            <TableRow key={sub.id} className={isPast ? 'bg-red-500/10' : ''}>
                                 <TableCell className="font-medium">{sub.name}</TableCell>
                                 <TableCell>
                                     <Badge variant="secondary" className="capitalize">{sub.billingCycle}</Badge>
@@ -91,11 +271,12 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
                                 <TableCell>
                                     <div className="flex items-center gap-2">
                                         {isSoon && <AlertCircle className="h-4 w-4 text-yellow-500" />}
-                                        <span className={isSoon ? 'font-semibold text-yellow-600' : ''}>
+                                        <span className={cn(isSoon && 'font-semibold text-yellow-600', isPast && 'font-semibold text-red-600')}>
                                             {formatDate(sub.nextPaymentDate)}
                                         </span>
                                     </div>
                                     {isSoon && <p className="text-xs text-muted-foreground">{daysLeft} dias restantes</p>}
+                                    {isPast && <p className="text-xs text-red-500 font-medium">Vencido</p>}
                                 </TableCell>
                                 <TableCell className="text-right font-semibold">
                                     {formatCurrency(sub.amount)}
@@ -137,5 +318,8 @@ export default function SubscriptionsClient({ initialSubscriptions }: { initialS
             </Table>
       </CardContent>
     </Card>
+    </>
   );
 }
+
+    
