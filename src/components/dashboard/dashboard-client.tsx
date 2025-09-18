@@ -40,7 +40,7 @@ const getDaysUntilDueDate = (date: Date) => {
 export default function DashboardClient({}: DashboardClientProps) {
   const { transactions, budgets, savingsGoals, subscriptions, bills } = useData();
 
-  const { totalIncome, totalExpenses, balance } = React.useMemo(() => {
+  const { totalIncome, totalExpenses, balance, totalToPay, totalToReceive } = React.useMemo(() => {
     const totalIncome = transactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0)
@@ -48,8 +48,17 @@ export default function DashboardClient({}: DashboardClientProps) {
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0)
     const balance = totalIncome - totalExpenses
-    return { totalIncome, totalExpenses, balance }
-  }, [transactions])
+
+    const pendingBills = bills.filter(b => b.status === 'pending');
+    const totalToPay = pendingBills
+        .filter(b => b.type === 'payable')
+        .reduce((sum, b) => sum + b.amount, 0);
+    const totalToReceive = pendingBills
+        .filter(b => b.type === 'receivable')
+        .reduce((sum, b) => sum + b.amount, 0);
+
+    return { totalIncome, totalExpenses, balance, totalToPay, totalToReceive }
+  }, [transactions, bills])
 
   const recentTransactions = transactions.slice(0, 5);
   
@@ -64,12 +73,13 @@ export default function DashboardClient({}: DashboardClientProps) {
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-6">
         <SummaryCard
           title="Saldo Total"
           value={formatCurrency(balance)}
           icon={<DollarSign className="h-5 w-5 text-muted-foreground" />}
           valueClassName="text-primary"
+          className="lg:col-span-2"
         />
         <SummaryCard
           title="Renda do Mês"
@@ -83,11 +93,19 @@ export default function DashboardClient({}: DashboardClientProps) {
           icon={<ArrowDownLeft className="h-5 w-5 text-red-500" />}
           valueClassName="text-red-600"
         />
+         <SummaryCard
+          title="Total a Pagar"
+          value={formatCurrency(totalToPay)}
+          icon={<Package className="h-5 w-5 text-red-500" />}
+          description="Contas pendentes"
+          valueClassName="text-red-600"
+        />
         <SummaryCard
-          title="Próximas Assinaturas"
-          value={formatCurrency(subscriptions.reduce((sum, s) => s.billingCycle === 'mensal' ? sum + s.amount : sum, 0))}
-          description="Total mensal"
-          icon={<Repeat className="h-5 w-5 text-muted-foreground" />}
+          title="Total a Receber"
+          value={formatCurrency(totalToReceive)}
+          icon={<PackageOpen className="h-5 w-5 text-green-500" />}
+          description="Contas pendentes"
+          valueClassName="text-green-600"
         />
       </div>
 
