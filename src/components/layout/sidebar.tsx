@@ -22,6 +22,7 @@ import {
   Gem,
   Settings,
   HelpCircle,
+  User,
 } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 
@@ -48,16 +49,14 @@ export default function AppSidebar() {
         <SidebarMenu>
           {menuItems.map((item) => (
             <SidebarMenuItem key={item.href}>
-              <Link href={item.href} passHref>
+              <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
-                  asChild
+                  as="a"
                   isActive={pathname === item.href}
                   tooltip={item.label}
                 >
-                  <span>
-                    <item.icon />
-                    <span>{item.label}</span>
-                  </span>
+                  <item.icon />
+                  <span>{item.label}</span>
                 </SidebarMenuButton>
               </Link>
             </SidebarMenuItem>
@@ -66,27 +65,35 @@ export default function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="p-2">
         <SidebarMenu>
+            <SidebarMenuItem>
+                <Link href="/profile" passHref legacyBehavior>
+                    <SidebarMenuButton
+                    as="a"
+                    isActive={pathname === '/profile'}
+                    tooltip="Perfil"
+                    >
+                    <User />
+                    <span>Perfil</span>
+                    </SidebarMenuButton>
+                </Link>
+            </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/settings" passHref>
+            <Link href="/settings" passHref legacyBehavior>
               <SidebarMenuButton
-                asChild
+                as="a"
                 isActive={pathname === '/settings'}
                 tooltip="Configurações"
               >
-                <span>
-                  <Settings />
-                  <span>Configurações</span>
-                </span>
+                <Settings />
+                <span>Configurações</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <Link href="/help" passHref>
-              <SidebarMenuButton asChild tooltip="Ajuda">
-                <span>
-                  <HelpCircle />
-                  <span>Ajuda</span>
-                </span>
+            <Link href="/help" passHref legacyBehavior>
+              <SidebarMenuButton as="a" tooltip="Ajuda">
+                <HelpCircle />
+                <span>Ajuda</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>

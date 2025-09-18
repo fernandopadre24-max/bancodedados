@@ -1,3 +1,4 @@
+import Link from "next/link";
 import {
   SidebarTrigger,
 } from "@/components/ui/sidebar"
@@ -33,13 +34,17 @@ export default function AppHeader() {
           <DropdownMenuContent align="end" className="w-56">
             <DropdownMenuLabel>Minha Conta</DropdownMenuLabel>
             <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              <User className="mr-2 h-4 w-4" />
-              <span>Perfil</span>
+            <DropdownMenuItem asChild>
+                <Link href="/profile">
+                    <User className="mr-2 h-4 w-4" />
+                    <span>Perfil</span>
+                </Link>
             </DropdownMenuItem>
-            <DropdownMenuItem>
-              <Settings className="mr-2 h-4 w-4" />
-              <span>Configurações</span>
+            <DropdownMenuItem asChild>
+                <Link href="/settings">
+                    <Settings className="mr-2 h-4 w-4" />
+                    <span>Configurações</span>
+                </Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem>
