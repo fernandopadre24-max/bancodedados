@@ -38,7 +38,7 @@ export default function AppSidebar() {
   return (
     <Sidebar variant="inset" collapsible="icon">
       <SidebarHeader className="items-center justify-center text-primary">
-        <Gem className="w-7 h-7" />
+        <Gem className="w-6 h-6" />
         <span className="text-xl font-semibold font-headline">ContaSimples</span>
       </SidebarHeader>
       <SidebarContent className="p-2">
