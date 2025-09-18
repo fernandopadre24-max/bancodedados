@@ -60,6 +60,11 @@ export default function SavingsClient({ initialGoals }: { initialGoals: SavingsG
 
   const form = useForm<z.infer<typeof goalSchema>>({
     resolver: zodResolver(goalSchema),
+    defaultValues: {
+        name: '',
+        targetAmount: 0,
+        currentAmount: 0,
+    }
   });
 
   function onSubmit(values: z.infer<typeof goalSchema>) {
