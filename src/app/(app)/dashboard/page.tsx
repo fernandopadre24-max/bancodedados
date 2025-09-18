@@ -1,4 +1,4 @@
-import { transactions, budgets, savingsGoals } from "@/lib/data"
+import { transactions, budgets, savingsGoals, subscriptions } from "@/lib/data"
 import { PageHeader } from "@/components/shared/page-header"
 import DashboardClient from "@/components/dashboard/dashboard-client"
 
@@ -17,6 +17,7 @@ export default function DashboardPage() {
         transactions={transactions} 
         budgets={budgets}
         savingsGoals={savingsGoals}
+        subscriptions={subscriptions}
       />
     </>
   )

@@ -1,19 +1,21 @@
 'use client'
 
 import React from "react"
-import type { Transaction, Budget, SavingsGoal } from "@/lib/types"
+import type { Transaction, Budget, SavingsGoal, Subscription } from "@/lib/types"
 import { SummaryCard } from "./summary-card"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { categoryIcons } from "@/lib/icons"
 import { Badge } from "@/components/ui/badge"
-import { ArrowUpRight, ArrowDownLeft, DollarSign, PiggyBank } from "lucide-react"
+import { ArrowUpRight, ArrowDownLeft, DollarSign, PiggyBank, Repeat, AlertCircle } from "lucide-react"
+import { cn } from "@/lib/utils"
 
 interface DashboardClientProps {
   transactions: Transaction[]
   budgets: Budget[]
   savingsGoals: SavingsGoal[]
+  subscriptions: Subscription[]
 }
 
 const formatCurrency = (amount: number) => {
@@ -23,7 +25,23 @@ const formatCurrency = (amount: number) => {
   }).format(amount)
 }
 
-export default function DashboardClient({ transactions, budgets, savingsGoals }: DashboardClientProps) {
+const formatDate = (date: Date) => {
+    return new Intl.DateTimeFormat('pt-BR', {
+        month: 'short',
+        day: 'numeric',
+    }).format(date);
+};
+
+const getDaysUntilNextPayment = (date: Date) => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const nextPayment = new Date(date);
+    nextPayment.setHours(0, 0, 0, 0);
+    const diffTime = nextPayment.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+};
+
+export default function DashboardClient({ transactions, budgets, savingsGoals, subscriptions }: DashboardClientProps) {
   const { totalIncome, totalExpenses, balance } = React.useMemo(() => {
     const totalIncome = transactions
       .filter(t => t.type === 'income')
@@ -36,10 +54,13 @@ export default function DashboardClient({ transactions, budgets, savingsGoals }:
   }, [transactions])
 
   const recentTransactions = transactions.slice(0, 5);
+  const upcomingSubscriptions = subscriptions
+    .sort((a, b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime())
+    .slice(0, 3);
 
   return (
     <div className="grid gap-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <SummaryCard
           title="Saldo Total"
           value={formatCurrency(balance)}
@@ -57,6 +78,12 @@ export default function DashboardClient({ transactions, budgets, savingsGoals }:
           value={formatCurrency(totalExpenses)}
           icon={<ArrowDownLeft className="h-5 w-5 text-red-500" />}
           valueClassName="text-red-600"
+        />
+        <SummaryCard
+          title="Próximas Assinaturas"
+          value={formatCurrency(subscriptions.reduce((sum, s) => s.billingCycle === 'mensal' ? sum + s.amount : sum, 0))}
+          description="Total mensal"
+          icon={<Repeat className="h-5 w-5 text-muted-foreground" />}
         />
       </div>
 
@@ -110,7 +137,7 @@ export default function DashboardClient({ transactions, budgets, savingsGoals }:
                     <CardDescription>Como você está se saindo em relação aos seus orçamentos.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    {budgets.slice(0,3).map(budget => {
+                    {budgets.slice(0,2).map(budget => {
                         const progress = (budget.spent / budget.amount) * 100
                         return (
                             <div key={budget.id}>
@@ -140,6 +167,33 @@ export default function DashboardClient({ transactions, budgets, savingsGoals }:
                                     <span className="text-sm font-bold text-primary">{formatCurrency(goal.currentAmount)}</span>
                                 </div>
                                 <Progress value={progress} indicatorClassName="bg-primary" />
+                            </div>
+                        )
+                    })}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Assinaturas Recorrentes</CardTitle>
+                    <CardDescription>Seus próximos pagamentos agendados.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                    {upcomingSubscriptions.map(sub => {
+                        const daysLeft = getDaysUntilNextPayment(sub.nextPaymentDate);
+                        const isSoon = daysLeft <= 7 && daysLeft >= 0;
+                        return (
+                            <div key={sub.id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    {isSoon && <AlertCircle className="h-5 w-5 text-yellow-500" />}
+                                    <div>
+                                        <p className="font-medium">{sub.name}</p>
+                                        <p className={cn("text-sm", isSoon ? "text-yellow-600" : "text-muted-foreground")}>
+                                            Vence em {formatDate(sub.nextPaymentDate)}
+                                        </p>
+                                    </div>
+                                </div>
+                                <p className="font-semibold">{formatCurrency(sub.amount)}</p>
                             </div>
                         )
                     })}
