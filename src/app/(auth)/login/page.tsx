@@ -7,9 +7,6 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { signInWithEmailAndPassword } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -32,8 +29,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Gem, Loader2 } from 'lucide-react';
 
 const loginSchema = z.object({
-  email: z.string().email('Por favor, insira um e-mail válido.'),
-  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
+  username: z.string().min(1, 'Por favor, insira um nome de usuário.'),
+  password: z.string().min(1, 'A senha é obrigatória.'),
 });
 
 export default function LoginPage() {
@@ -44,29 +41,30 @@ export default function LoginPage() {
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
-      email: '',
+      username: '',
       password: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof loginSchema>) {
     setIsLoading(true);
-    try {
-      await signInWithEmailAndPassword(auth, values.email, values.password);
-      toast({
-        title: 'Login bem-sucedido!',
-        description: 'Redirecionando para o painel...',
-      });
-      router.push('/dashboard');
-    } catch (error: any) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro no Login',
-        description: 'As credenciais fornecidas estão incorretas. Por favor, tente novamente.',
-      });
-    } finally {
+    // Simulating a network request
+    setTimeout(() => {
+      if (values.username === 'admin' && values.password === 'admin') {
+        toast({
+          title: 'Login bem-sucedido!',
+          description: 'Redirecionando para o painel...',
+        });
+        router.push('/dashboard');
+      } else {
+        toast({
+          variant: 'destructive',
+          title: 'Erro no Login',
+          description: 'As credenciais fornecidas estão incorretas. Por favor, tente novamente.',
+        });
         setIsLoading(false);
-    }
+      }
+    }, 1000);
   }
 
   return (
@@ -86,14 +84,13 @@ export default function LoginPage() {
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
                 control={form.control}
-                name="email"
+                name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>E-mail</FormLabel>
+                    <FormLabel>Nome de usuário</FormLabel>
                     <FormControl>
                       <Input
-                        type="email"
-                        placeholder="seu@email.com"
+                        placeholder="admin"
                         {...field}
                       />
                     </FormControl>

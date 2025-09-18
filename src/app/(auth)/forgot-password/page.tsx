@@ -6,9 +6,6 @@ import Link from 'next/link';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
-
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -31,7 +28,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Gem, Loader2 } from 'lucide-react';
 
 const forgotPasswordSchema = z.object({
-  email: z.string().email('Por favor, insira um e-mail válido.'),
+  username: z.string().min(1, 'Por favor, insira um nome de usuário.'),
 });
 
 export default function ForgotPasswordPage() {
@@ -42,28 +39,21 @@ export default function ForgotPasswordPage() {
   const form = useForm<z.infer<typeof forgotPasswordSchema>>({
     resolver: zodResolver(forgotPasswordSchema),
     defaultValues: {
-      email: '',
+      username: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof forgotPasswordSchema>) {
     setIsLoading(true);
-    try {
-      await sendPasswordResetEmail(auth, values.email);
-      setIsEmailSent(true);
-      toast({
-        title: 'E-mail enviado!',
-        description: 'Verifique sua caixa de entrada para redefinir sua senha.',
-      });
-    } catch (error) {
-      toast({
-        variant: 'destructive',
-        title: 'Erro ao enviar e-mail',
-        description: 'Não foi possível encontrar uma conta com este e-mail. Por favor, verifique e tente novamente.',
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    // This is a mock implementation.
+    setTimeout(() => {
+        setIsEmailSent(true);
+        toast({
+            title: 'Link enviado!',
+            description: 'Se a recuperação de senha estivesse habilitada, um link seria enviado.',
+        });
+        setIsLoading(false);
+    }, 1000);
   }
 
   return (
@@ -76,8 +66,8 @@ export default function ForgotPasswordPage() {
           <CardTitle className="text-2xl font-bold">Esqueceu sua Senha?</CardTitle>
           <CardDescription>
             {isEmailSent
-              ? 'Um link para redefinir sua senha foi enviado para o seu e-mail.'
-              : 'Insira seu e-mail para receber um link de redefinição de senha.'}
+              ? 'Um link para redefinir sua senha foi enviado (simulação).'
+              : 'Insira seu nome de usuário para receber um link de redefinição de senha.'}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -86,14 +76,13 @@ export default function ForgotPasswordPage() {
               <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
                   control={form.control}
-                  name="email"
+                  name="username"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>E-mail</FormLabel>
+                      <FormLabel>Nome de usuário</FormLabel>
                       <FormControl>
                         <Input
-                          type="email"
-                          placeholder="seu@email.com"
+                          placeholder="seu.usuario"
                           {...field}
                         />
                       </FormControl>
@@ -102,13 +91,13 @@ export default function ForgotPasswordPage() {
                   )}
                 />
                 <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? <Loader2 className="animate-spin" /> : 'Enviar E-mail'}
+                  {isLoading ? <Loader2 className="animate-spin" /> : 'Enviar Link'}
                 </Button>
               </form>
             </Form>
           ) : (
             <div className="text-center text-sm text-green-600 bg-green-50 p-4 rounded-md">
-                Verifique sua caixa de spam se não encontrar o e-mail na sua caixa de entrada principal.
+                Verifique sua caixa de entrada.
             </div>
           )}
         </CardContent>

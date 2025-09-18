@@ -17,7 +17,7 @@ const mockUser: User = {
     uid: 'mock-user-uid',
     email: 'dev@contasimples.com',
     emailVerified: true,
-    displayName: 'Usuário Dev',
+    displayName: 'Admin',
     isAnonymous: false,
     photoURL: 'https://picsum.photos/seed/user-avatar/40/40',
     providerData: [],
@@ -48,9 +48,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // When you have your real Firebase config, you can switch back to this.
-    const useFirebaseAuth = process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'FIREBASE_API_KEY_PLACEHOLDER';
+    // This logic now supports both real Firebase and mock user based on path
+    const isAuthPage = ['/login', '/signup', '/forgot-password'].includes(window.location.pathname);
 
+    if (isAuthPage) {
+        setLoading(false);
+        setUser(null); // No user on auth pages
+        return;
+    }
+
+    const useFirebaseAuth = process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_API_KEY !== 'FIREBASE_API_KEY_PLACEHOLDER';
+    
     if (useFirebaseAuth) {
         const unsubscribe = onAuthStateChanged(auth, (user) => {
             setUser(user);
@@ -58,7 +66,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         return () => unsubscribe();
     } else {
-        // Use mock user for local development
+        // Use mock user for local development if not on an auth page
         setUser(mockUser);
         setLoading(false);
     }
