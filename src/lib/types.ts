@@ -9,6 +9,7 @@ export type Transaction = {
   amount: number;
   type: 'income' | 'expense';
   category: Category;
+  billId?: string; 
 };
 
 export type Budget = {
@@ -32,6 +33,20 @@ export type Subscription = {
   billingCycle: 'mensal' | 'anual';
   nextPaymentDate: Date;
 };
+
+export type Bill = {
+    id: string;
+    description: string;
+    amount: number;
+    dueDate: Date;
+    type: 'payable' | 'receivable';
+    status: 'paid' | 'pending';
+    installments?: {
+        current: number;
+        total: number;
+    };
+    interest?: number; 
+}
 
 export type CategoryIconMap = {
   [key in Category]: LucideIcon;

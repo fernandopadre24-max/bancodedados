@@ -1,4 +1,4 @@
-import type { Transaction, Budget, SavingsGoal, Subscription } from './types';
+import type { Transaction, Budget, SavingsGoal, Subscription, Bill } from './types';
 
 export const transactions: Transaction[] = [
   { id: '1', date: new Date(2024, 6, 1), description: 'Salário Mensal', amount: 5000, type: 'income', category: 'Renda' },
@@ -45,3 +45,10 @@ export const subscriptions: Subscription[] = [
     { id: '3', name: 'Amazon Prime', amount: 139, billingCycle: 'anual', nextPaymentDate: new Date(2025, 2, 20) },
     { id: '4', name: 'Academia', amount: 40, billingCycle: 'mensal', nextPaymentDate: new Date(2024, 7, 1) },
 ];
+
+export const bills: Bill[] = [
+    { id: '1', description: 'Plano de Saúde', amount: 300, dueDate: new Date(2024, 7, 5), type: 'payable', status: 'pending' },
+    { id: '2', description: 'Consultoria de Design', amount: 1200, dueDate: new Date(2024, 7, 20), type: 'receivable', status: 'pending' },
+    { id: '3', description: 'Compra de Notebook (Parcela 1/12)', amount: 250, dueDate: new Date(2024, 7, 15), type: 'payable', status: 'pending', installments: { current: 1, total: 12 } },
+    { id: '4', description: 'Fatura do Cartão de Crédito', amount: 850, dueDate: new Date(2024, 7, 8), type: 'payable', status: 'pending' },
+]

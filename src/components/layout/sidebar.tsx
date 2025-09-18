@@ -23,12 +23,14 @@ import {
   Settings,
   HelpCircle,
   User,
+  Receipt,
 } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 
 const menuItems = [
   { href: '/dashboard', label: 'Painel', icon: LayoutDashboard },
   { href: '/transactions', label: 'Transações', icon: Wallet },
+  { href: '/bills', label: 'Contas', icon: Receipt },
   { href: '/budgets', label: 'Orçamentos', icon: BookText },
   { href: '/reports', label: 'Relatórios', icon: LineChart },
   { href: '/savings', label: 'Metas de Poupança', icon: PiggyBank },
@@ -52,7 +54,7 @@ export default function AppSidebar() {
               <Link href={item.href} passHref legacyBehavior>
                 <SidebarMenuButton
                   as="a"
-                  isActive={pathname === item.href}
+                  isActive={pathname.startsWith(item.href)}
                   tooltip={item.label}
                 >
                   <item.icon />

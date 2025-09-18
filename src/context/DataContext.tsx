@@ -2,12 +2,13 @@
 'use client';
 
 import React, { createContext, useState, useContext, ReactNode } from 'react';
-import type { Transaction, Budget, SavingsGoal, Subscription, Category } from '@/lib/types';
+import type { Transaction, Budget, SavingsGoal, Subscription, Category, Bill } from '@/lib/types';
 import { 
     transactions as initialTransactions, 
     budgets as initialBudgets, 
     savingsGoals as initialSavingsGoals,
-    subscriptions as initialSubscriptions 
+    subscriptions as initialSubscriptions,
+    bills as initialBills
 } from '@/lib/data';
 import { categoryIcons } from '@/lib/icons';
 
@@ -22,6 +23,8 @@ interface DataContextType {
   setSavingsGoals: React.Dispatch<React.SetStateAction<SavingsGoal[]>>;
   subscriptions: Subscription[];
   setSubscriptions: React.Dispatch<React.SetStateAction<Subscription[]>>;
+  bills: Bill[];
+  setBills: React.Dispatch<React.SetStateAction<Bill[]>>;
   categories: Category[];
   addCategory: (category: Category) => void;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
@@ -34,6 +37,9 @@ interface DataContextType {
   updateBudget: (budget: Budget) => void;
   deleteBudget: (id: string) => void;
   applyBudgetSuggestions: (suggestedBudgets: Record<string, number>) => void;
+  addBill: (bill: Omit<Bill, 'id'>) => void;
+  updateBill: (bill: Bill) => void;
+  deleteBill: (id: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -43,6 +49,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [budgets, setBudgets] = useState(initialBudgets);
   const [savingsGoals, setSavingsGoals] = useState(initialSavingsGoals);
   const [subscriptions, setSubscriptions] = useState(initialSubscriptions);
+  const [bills, setBills] = useState(initialBills);
   const [categories, setCategories] = useState<Category[]>(initialCategories);
 
   const addCategory = (category: Category) => {
@@ -100,6 +107,46 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
   };
 
+  const addBill = (bill: Omit<Bill, 'id'>) => {
+    const newBill = { ...bill, id: Date.now().toString() };
+    if (bill.installments && bill.installments.total > 1) {
+        // Create multiple bills for installments
+        const installmentBills: Bill[] = [];
+        for (let i = 0; i < bill.installments.total; i++) {
+            const dueDate = new Date(bill.dueDate);
+            dueDate.setMonth(dueDate.getMonth() + i);
+            installmentBills.push({
+                ...newBill,
+                id: `${newBill.id}-${i}`,
+                description: `${bill.description} (${i + 1}/${bill.installments.total})`,
+                amount: bill.amount / bill.installments.total,
+                dueDate: dueDate,
+                installments: { current: i + 1, total: bill.installments.total }
+            });
+        }
+        setBills(prev => [...prev, ...installmentBills].sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()));
+    } else {
+        setBills(prev => [...prev, newBill].sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()));
+    }
+  };
+
+  const updateBill = (bill: Bill) => {
+    setBills(prev => prev.map(b => b.id === bill.id ? bill : b).sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()));
+    if(bill.status === 'paid') {
+        addTransaction({
+            description: bill.description,
+            amount: bill.amount,
+            type: bill.type === 'payable' ? 'expense' : 'income',
+            category: 'Contas',
+            billId: bill.id,
+        })
+    }
+  };
+
+  const deleteBill = (id: string) => {
+    setBills(prev => prev.filter(b => b.id !== id));
+  };
+
   const value = {
     transactions,
     setTransactions,
@@ -109,6 +156,8 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setSavingsGoals,
     subscriptions,
     setSubscriptions,
+    bills,
+    setBills,
     categories,
     addCategory,
     addTransaction,
@@ -121,6 +170,9 @@ export function DataProvider({ children }: { children: ReactNode }) {
     updateBudget,
     deleteBudget,
     applyBudgetSuggestions,
+    addBill,
+    updateBill,
+    deleteBill,
   };
 
   return (
