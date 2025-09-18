@@ -1,3 +1,5 @@
+
+import ProfileClient from "@/components/profile/profile-client"
 import { PageHeader } from "@/components/shared/page-header"
 
 export const metadata = {
@@ -11,9 +13,7 @@ export default function ProfilePage() {
         title="Perfil"
         description="Gerencie as informações do seu perfil."
       />
-      <div>
-        {/* O conteúdo da página de perfil virá aqui */}
-      </div>
+      <ProfileClient />
     </>
   )
 }
