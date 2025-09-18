@@ -28,6 +28,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { Gem, Loader2 } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
 
 const signupSchema = z
   .object({
@@ -43,6 +44,7 @@ const signupSchema = z
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<z.infer<typeof signupSchema>>({
@@ -58,6 +60,7 @@ export default function SignupPage() {
     setIsLoading(true);
     // Mock signup logic
     setTimeout(() => {
+        login(); // Authenticate the user immediately after signup
         toast({
             title: 'Conta criada com sucesso!',
             description: 'Você será redirecionado para o painel.',
