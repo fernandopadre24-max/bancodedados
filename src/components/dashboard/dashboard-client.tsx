@@ -7,7 +7,7 @@ import { Progress } from "@/components/ui/progress"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { categoryIcons } from "@/lib/icons"
 import { Badge } from "@/components/ui/badge"
-import { ArrowUpRight, ArrowDownLeft, DollarSign, Repeat, AlertCircle } from "lucide-react"
+import { ArrowUpRight, ArrowDownLeft, DollarSign, Repeat, AlertCircle, Package, PackageOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useData } from "@/context/DataContext"
 import { SummaryCard } from "./summary-card"
@@ -28,17 +28,17 @@ const formatDate = (date: Date) => {
     }).format(date);
 };
 
-const getDaysUntilNextPayment = (date: Date) => {
+const getDaysUntilDueDate = (date: Date) => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const nextPayment = new Date(date);
-    nextPayment.setHours(0, 0, 0, 0);
-    const diffTime = nextPayment.getTime() - today.getTime();
+    const dueDate = new Date(date);
+    dueDate.setHours(0, 0, 0, 0);
+    const diffTime = dueDate.getTime() - today.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 };
 
 export default function DashboardClient({}: DashboardClientProps) {
-  const { transactions, budgets, savingsGoals, subscriptions } = useData();
+  const { transactions, budgets, savingsGoals, subscriptions, bills } = useData();
 
   const { totalIncome, totalExpenses, balance } = React.useMemo(() => {
     const totalIncome = transactions
@@ -52,6 +52,12 @@ export default function DashboardClient({}: DashboardClientProps) {
   }, [transactions])
 
   const recentTransactions = transactions.slice(0, 5);
+  
+  const upcomingBills = bills
+    .filter(b => b.status === 'pending')
+    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
+    .slice(0, 3);
+
   const upcomingSubscriptions = subscriptions
     .sort((a, b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime())
     .slice(0, 3);
@@ -152,19 +158,25 @@ export default function DashboardClient({}: DashboardClientProps) {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="font-headline">Metas de Poupança</CardTitle>
-                    <CardDescription>Seu progresso em direção aos seus objetivos.</CardDescription>
+                    <CardTitle className="font-headline">Próximas Contas</CardTitle>
+                    <CardDescription>Suas contas a pagar e receber que vencem em breve.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                    {savingsGoals.slice(0,2).map(goal => {
-                        const progress = (goal.currentAmount / goal.targetAmount) * 100
+                <CardContent className="space-y-3">
+                    {upcomingBills.map(bill => {
+                        const daysLeft = getDaysUntilDueDate(bill.dueDate);
+                        const isSoon = daysLeft <= 7 && daysLeft >= 0;
                         return (
-                            <div key={goal.id}>
-                                <div className="flex justify-between mb-1">
-                                    <span className="text-sm font-medium">{goal.name}</span>
-                                    <span className="text-sm font-bold text-primary">{formatCurrency(goal.currentAmount)}</span>
+                            <div key={bill.id} className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                   {bill.type === 'payable' ? <Package className='text-red-500'/> : <PackageOpen className='text-green-500'/>}
+                                    <div>
+                                        <p className="font-medium">{bill.description}</p>
+                                        <p className={cn("text-sm", isSoon ? "text-yellow-600" : "text-muted-foreground")}>
+                                            Vence em {formatDate(bill.dueDate)}
+                                        </p>
+                                    </div>
                                 </div>
-                                <Progress value={progress} indicatorClassName="bg-primary" />
+                                <p className="font-semibold">{formatCurrency(bill.amount)}</p>
                             </div>
                         )
                     })}
@@ -178,7 +190,7 @@ export default function DashboardClient({}: DashboardClientProps) {
                 </CardHeader>
                 <CardContent className="space-y-3">
                     {upcomingSubscriptions.map(sub => {
-                        const daysLeft = getDaysUntilNextPayment(sub.nextPaymentDate);
+                        const daysLeft = getDaysUntilDueDate(sub.nextPaymentDate);
                         const isSoon = daysLeft <= 7 && daysLeft >= 0;
                         return (
                             <div key={sub.id} className="flex items-center justify-between">
@@ -197,8 +209,31 @@ export default function DashboardClient({}: DashboardClientProps) {
                     })}
                 </CardContent>
             </Card>
+
+            <Card>
+                <CardHeader>
+                    <CardTitle className="font-headline">Metas de Poupança</CardTitle>
+                    <CardDescription>Seu progresso em direção aos seus objetivos.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                    {savingsGoals.slice(0,2).map(goal => {
+                        const progress = (goal.currentAmount / goal.targetAmount) * 100
+                        return (
+                            <div key={goal.id}>
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-sm font-medium">{goal.name}</span>
+                                    <span className="text-sm font-bold text-primary">{formatCurrency(goal.currentAmount)}</span>
+                                </div>
+                                <Progress value={progress} indicatorClassName="bg-primary" />
+                            </div>
+                        )
+                    })}
+                </CardContent>
+            </Card>
         </div>
       </div>
     </div>
   )
 }
+
+    
