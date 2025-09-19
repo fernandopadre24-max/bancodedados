@@ -6,7 +6,8 @@ import { User } from 'firebase/auth';
 
 // Define a simplified user type for our mock
 export interface MockUser extends Omit<User, 'providerData' | 'toJSON' | 'delete' | 'getIdToken' | 'getIdTokenResult' | 'reload'> {
-    // Add any custom fields if necessary
+    password?: string;
+    isExample?: boolean;
 }
 
 // Initial mock users for development
@@ -24,6 +25,7 @@ const initialMockUsers: MockUser[] = [
         },
         providerId: 'password',
         tenantId: null,
+        isExample: true,
     },
     {
         uid: 'mock-user-uid-user1',
@@ -38,6 +40,7 @@ const initialMockUsers: MockUser[] = [
         },
         providerId: 'password',
         tenantId: null,
+        isExample: true,
     },
 ];
 
@@ -47,7 +50,7 @@ interface AuthContextType {
   loading: boolean;
   login: (user: MockUser) => void;
   logout: () => void;
-  signup: (details: { displayName: string; email: string }) => MockUser;
+  signup: (details: { displayName: string; password: string }) => MockUser;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -105,8 +108,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // This effect runs only when `users` state changes, preventing unnecessary writes.
-    // It avoids running on initial mount before `users` is properly initialized.
     if (users.length > 0) {
       saveToLocalStorage('mock_users', users);
     }
@@ -114,8 +115,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
 
   const login = (userToLogin: MockUser) => {
-    sessionStorage.setItem('user', JSON.stringify(userToLogin));
-    setUser(userToLogin);
+    try {
+        const userString = JSON.stringify(userToLogin);
+        sessionStorage.setItem('user', userString);
+        setUser(userToLogin);
+    } catch(e) {
+        console.error("Failed to stringify user or set to session storage", e);
+    }
   };
 
   const logout = () => {
@@ -123,11 +129,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
   };
   
-  const signup = (details: { displayName: string; email: string }): MockUser => {
+  const signup = (details: { displayName: string; password: string }): MockUser => {
+    const existingUser = users.find(u => u.displayName === details.displayName);
+    if (existingUser) {
+        throw new Error('Este nome de usuário já está em uso.');
+    }
+
     const newUser: MockUser = {
         uid: `mock-user-uid-${Date.now()}`,
-        email: details.email,
+        email: `${details.displayName.toLowerCase().replace(/\s/g, '')}@contasimples.com`,
         displayName: details.displayName,
+        password: details.password,
         emailVerified: true,
         isAnonymous: false,
         photoURL: `https://picsum.photos/seed/${details.displayName}/40/40`,
@@ -137,6 +149,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         },
         providerId: 'password',
         tenantId: null,
+        isExample: false,
     };
     setUsers(prev => [...prev, newUser]);
     login(newUser); // Automatically log in the new user

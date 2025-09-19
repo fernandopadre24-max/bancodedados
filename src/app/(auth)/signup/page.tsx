@@ -24,8 +24,8 @@ import * as z from 'zod';
 import { Form, FormControl, FormField, FormItem, FormMessage } from '@/components/ui/form';
 
 const signupSchema = z.object({
-  displayName: z.string().min(2, 'O nome deve ter pelo menos 2 caracteres.'),
-  email: z.string().email('Por favor, insira um e-mail válido.'),
+  displayName: z.string().min(2, 'O nome de usuário deve ter pelo menos 2 caracteres.'),
+  password: z.string().min(6, 'A senha deve ter pelo menos 6 caracteres.'),
 });
 
 export default function SignupPage() {
@@ -38,7 +38,7 @@ export default function SignupPage() {
     resolver: zodResolver(signupSchema),
     defaultValues: {
       displayName: '',
-      email: '',
+      password: '',
     },
   });
 
@@ -46,12 +46,21 @@ export default function SignupPage() {
     setIsLoading(true);
     // Simulating a network request
     setTimeout(() => {
-      signup(values);
-      toast({
-        title: 'Cadastro realizado com sucesso!',
-        description: `Bem-vindo, ${values.displayName}! Você foi logado automaticamente.`,
-      });
-      router.push('/dashboard');
+      try {
+        signup(values);
+        toast({
+          title: 'Cadastro realizado com sucesso!',
+          description: `Bem-vindo, ${values.displayName}! Você foi logado automaticamente.`,
+        });
+        router.push('/dashboard');
+      } catch (error: any) {
+        toast({
+          variant: 'destructive',
+          title: 'Erro no Cadastro',
+          description: error.message,
+        });
+        setIsLoading(false);
+      }
     }, 500);
   };
 
@@ -75,9 +84,9 @@ export default function SignupPage() {
                 name="displayName"
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="displayName">Nome</Label>
+                    <Label htmlFor="displayName">Nome de Usuário</Label>
                     <FormControl>
-                      <Input id="displayName" placeholder="Seu nome completo" {...field} />
+                      <Input id="displayName" placeholder="Seu nome de usuário" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -85,12 +94,12 @@ export default function SignupPage() {
               />
               <FormField
                 control={form.control}
-                name="email"
+                name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="password">Senha</Label>
                     <FormControl>
-                      <Input id="email" type="email" placeholder="seu@email.com" {...field} />
+                      <Input id="password" type="password" placeholder="Sua senha" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
