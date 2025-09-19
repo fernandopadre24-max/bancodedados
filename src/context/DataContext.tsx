@@ -80,6 +80,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const userId = user?.uid;
   const isExampleUser = user?.isExample ?? false;
 
+  const [isLoading, setIsLoading] = useState(true);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
@@ -91,51 +92,51 @@ export function DataProvider({ children }: { children: ReactNode }) {
   // Load data when user logs in
   useEffect(() => {
     if (userId) {
-      // Check if data already exists for this user
-      let userData = {
-        transactions: loadFromLocalStorage<Transaction[]>(`transactions_${userId}`),
-        budgets: loadFromLocalStorage<Budget[]>(`budgets_${userId}`),
-        savingsGoals: loadFromLocalStorage<SavingsGoal[]>(`savingsGoals_${userId}`),
-        subscriptions: loadFromLocalStorage<Subscription[]>(`subscriptions_${userId}`),
-        bills: loadFromLocalStorage<Bill[]>(`bills_${userId}`),
-        categories: loadFromLocalStorage<Category[]>(`categories_${userId}`),
-      };
+      setIsLoading(true);
+      
+      const transactionsData = loadFromLocalStorage<Transaction[]>(`transactions_${userId}`);
+      const budgetsData = loadFromLocalStorage<Budget[]>(`budgets_${userId}`);
+      const savingsGoalsData = loadFromLocalStorage<SavingsGoal[]>(`savingsGoals_${userId}`);
+      const subscriptionsData = loadFromLocalStorage<Subscription[]>(`subscriptions_${userId}`);
+      const billsData = loadFromLocalStorage<Bill[]>(`bills_${userId}`);
+      const categoriesData = loadFromLocalStorage<Category[]>(`categories_${userId}`);
 
-      // If no data, initialize it
-      if (userData.transactions === null) {
-        if (isExampleUser) {
-            // For example users, use the initial mock data
-            userData.transactions = initialTransactionsData;
-            userData.budgets = initialBudgetsData;
-            userData.savingsGoals = initialSavingsGoalsData;
-            userData.subscriptions = initialSubscriptionsData;
-            userData.bills = initialBillsData;
-            userData.categories = initialCategories;
-        } else {
-            // For new users, start with empty data
-            userData.transactions = [];
-            userData.budgets = [];
-            userData.savingsGoals = [];
-            userData.subscriptions = [];
-            userData.bills = [];
-            userData.categories = initialCategories; // Start with default categories
-        }
-         // Save the initial state to localStorage
-         saveToLocalStorage(`transactions_${userId}`, userData.transactions);
-         saveToLocalStorage(`budgets_${userId}`, userData.budgets);
-         saveToLocalStorage(`savingsGoals_${userId}`, userData.savingsGoals);
-         saveToLocalStorage(`subscriptions_${userId}`, userData.subscriptions);
-         saveToLocalStorage(`bills_${userId}`, userData.bills);
-         saveToLocalStorage(`categories_${userId}`, userData.categories);
+      if (transactionsData === null) {
+        // Data for this user does not exist, initialize it
+        const initialData = {
+          transactions: isExampleUser ? initialTransactionsData : [],
+          budgets: isExampleUser ? initialBudgetsData : [],
+          savingsGoals: isExampleUser ? initialSavingsGoalsData : [],
+          subscriptions: isExampleUser ? initialSubscriptionsData : [],
+          bills: isExampleUser ? initialBillsData : [],
+          categories: initialCategories,
+        };
+
+        setTransactions(initialData.transactions);
+        setBudgets(initialData.budgets);
+        setSavingsGoals(initialData.savingsGoals);
+        setSubscriptions(initialData.subscriptions);
+        setBills(initialData.bills);
+        setCategories(initialData.categories);
+
+        // Save this initial state to localStorage
+        saveToLocalStorage(`transactions_${userId}`, initialData.transactions);
+        saveToLocalStorage(`budgets_${userId}`, initialData.budgets);
+        saveToLocalStorage(`savingsGoals_${userId}`, initialData.savingsGoals);
+        saveToLocalStorage(`subscriptions_${userId}`, initialData.subscriptions);
+        saveToLocalStorage(`bills_${userId}`, initialData.bills);
+        saveToLocalStorage(`categories_${userId}`, initialData.categories);
+
+      } else {
+        // Data exists, load it from storage
+        setTransactions(transactionsData || []);
+        setBudgets(budgetsData || []);
+        setSavingsGoals(savingsGoalsData || []);
+        setSubscriptions(subscriptionsData || []);
+        setBills(billsData || []);
+        setCategories(categoriesData || initialCategories);
       }
-
-      setTransactions(userData.transactions || []);
-      setBudgets(userData.budgets || []);
-      setSavingsGoals(userData.savingsGoals || []);
-      setSubscriptions(userData.subscriptions || []);
-      setBills(userData.bills || []);
-      setCategories(userData.categories || initialCategories);
-
+      setIsLoading(false);
     } else {
       // Clear data on logout
       setTransactions([]);
@@ -147,25 +148,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
     }
   }, [userId, isExampleUser]);
 
-  // Save data whenever it changes
+  // Save all data whenever any piece of it changes, but only after initial load is complete
   useEffect(() => {
-    if (userId) saveToLocalStorage(`transactions_${userId}`, transactions);
-  }, [transactions, userId]);
-  useEffect(() => {
-    if (userId) saveToLocalStorage(`budgets_${userId}`, budgets);
-  }, [budgets, userId]);
-  useEffect(() => {
-    if (userId) saveToLocalStorage(`savingsGoals_${userId}`, savingsGoals);
-  }, [savingsGoals, userId]);
-  useEffect(() => {
-    if (userId) saveToLocalStorage(`subscriptions_${userId}`, subscriptions);
-  }, [subscriptions, userId]);
-  useEffect(() => {
-    if (userId) saveToLocalStorage(`bills_${userId}`, bills);
-  }, [bills, userId]);
-  useEffect(() => {
-    if (userId) saveToLocalStorage(`categories_${userId}`, categories);
-  }, [categories, userId]);
+    if (!isLoading && userId) {
+        saveToLocalStorage(`transactions_${userId}`, transactions);
+        saveToLocalStorage(`budgets_${userId}`, budgets);
+        saveToLocalStorage(`savingsGoals_${userId}`, savingsGoals);
+        saveToLocalStorage(`subscriptions_${userId}`, subscriptions);
+        saveToLocalStorage(`bills_${userId}`, bills);
+        saveToLocalStorage(`categories_${userId}`, categories);
+    }
+  }, [transactions, budgets, savingsGoals, subscriptions, bills, categories, userId, isLoading]);
 
 
   const addCategory = (category: Category) => {
