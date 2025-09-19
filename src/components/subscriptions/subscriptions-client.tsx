@@ -85,7 +85,7 @@ const formatDate = (date: Date) => {
   }).format(date);
 };
 
-export default function SubscriptionsClient({ initialSubscriptions }: { initialSubscriptions: Subscription[] }) {
+export default function SubscriptionsClient() {
   const { subscriptions, addSubscription, updateSubscription, deleteSubscription } = useData();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);

@@ -55,7 +55,7 @@ const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
-export default function SavingsClient({ initialGoals }: { initialGoals: SavingsGoal[] }) {
+export default function SavingsClient() {
   const { savingsGoals, addSavingsGoal, deleteSavingsGoal } = useData();
   const [open, setOpen] = React.useState(false);
   const { toast } = useToast();

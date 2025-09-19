@@ -49,7 +49,7 @@ export default function BudgetsClient() {
   const { historicalSpendingData, income } = React.useMemo(() => {
     const historicalSpending = transactions.reduce((acc, t) => {
       if (t.type === 'expense') {
-          const categoryKey = t.category.toLowerCase().replace(' ', '');
+          const categoryKey = t.category.toLowerCase().replace(/ /g, '');
           acc[categoryKey] = (acc[categoryKey] || 0) + t.amount;
       }
       return acc;
@@ -216,12 +216,12 @@ export default function BudgetsClient() {
                 </Alert>
                 <div className="space-y-2">
                     {Object.entries(suggestedBudgets).map(([category, amount]) => {
-                        const originalBudget = budgets.find(b => b.category.toLowerCase().replace(' ', '') === category);
+                        const originalBudget = budgets.find(b => b.category.toLowerCase().replace(/ /g, '') === category);
                         const originalAmount = originalBudget ? originalBudget.amount : 0;
                         const difference = amount - originalAmount;
                         return (
                             <div key={category} className="flex justify-between items-center p-2 rounded-md bg-secondary/50">
-                                <span className="capitalize font-medium">{category}</span>
+                                <span className="capitalize font-medium">{category.replace(/([A-Z])/g, ' $1').trim()}</span>
                                 <div className='text-right'>
                                     <span className="font-bold">{formatCurrency(amount)}</span>
                                     {difference !== 0 && (

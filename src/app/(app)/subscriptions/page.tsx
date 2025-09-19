@@ -1,5 +1,4 @@
 
-import { subscriptions } from "@/lib/data"
 import { PageHeader } from "@/components/shared/page-header"
 import SubscriptionsClient from "@/components/subscriptions/subscriptions-client"
 
@@ -16,7 +15,7 @@ export default function SubscriptionsPage() {
         title="Assinaturas"
         description="Acompanhe seus pagamentos recorrentes."
       />
-      <SubscriptionsClient initialSubscriptions={subscriptions} />
+      <SubscriptionsClient />
     </>
   )
 }

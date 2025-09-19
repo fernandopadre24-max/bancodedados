@@ -1,16 +1,17 @@
 
 'use client';
 
-import React, { createContext, useState, useContext, ReactNode } from 'react';
+import React, { createContext, useState, useContext, ReactNode, useEffect } from 'react';
 import type { Transaction, Budget, SavingsGoal, Subscription, Category, Bill } from '@/lib/types';
 import { 
-    transactions as initialTransactions, 
-    budgets as initialBudgets, 
-    savingsGoals as initialSavingsGoals,
-    subscriptions as initialSubscriptions,
-    bills as initialBills
+    transactions as initialTransactionsData, 
+    budgets as initialBudgetsData, 
+    savingsGoals as initialSavingsGoalsData,
+    subscriptions as initialSubscriptionsData,
+    bills as initialBillsData
 } from '@/lib/data';
 import { categoryIcons } from '@/lib/icons';
+import { useAuth } from './AuthContext';
 
 const initialCategories = Object.keys(categoryIcons) as Category[];
 
@@ -44,13 +45,87 @@ interface DataContextType {
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
+// Helper function to get data from localStorage
+const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') return defaultValue;
+    try {
+        const item = window.localStorage.getItem(key);
+        if (item) {
+            // Dates are stored as strings, so we need to parse them back
+            return JSON.parse(item, (key, value) => {
+                if (key === 'date' || key === 'dueDate' || key === 'nextPaymentDate') {
+                    return new Date(value);
+                }
+                return value;
+            });
+        }
+    } catch (error) {
+        console.warn(`Error reading localStorage key “${key}”:`, error);
+    }
+    return defaultValue;
+};
+
+// Helper function to save data to localStorage
+const saveToLocalStorage = <T,>(key: string, value: T) => {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.warn(`Error writing to localStorage key “${key}”:`, error);
+    }
+};
+
 export function DataProvider({ children }: { children: ReactNode }) {
-  const [transactions, setTransactions] = useState(initialTransactions);
-  const [budgets, setBudgets] = useState(initialBudgets);
-  const [savingsGoals, setSavingsGoals] = useState(initialSavingsGoals);
-  const [subscriptions, setSubscriptions] = useState(initialSubscriptions);
-  const [bills, setBills] = useState(initialBills);
-  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const { user } = useAuth();
+  const userId = user?.uid;
+
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [budgets, setBudgets] = useState<Budget[]>([]);
+  const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [bills, setBills] = useState<Bill[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+
+  // Load data when user changes
+  useEffect(() => {
+    if (userId) {
+      setTransactions(loadFromLocalStorage(`transactions_${userId}`, initialTransactionsData));
+      setBudgets(loadFromLocalStorage(`budgets_${userId}`, initialBudgetsData));
+      setSavingsGoals(loadFromLocalStorage(`savingsGoals_${userId}`, initialSavingsGoalsData));
+      setSubscriptions(loadFromLocalStorage(`subscriptions_${userId}`, initialSubscriptionsData));
+      setBills(loadFromLocalStorage(`bills_${userId}`, initialBillsData));
+      setCategories(loadFromLocalStorage(`categories_${userId}`, initialCategories));
+    } else {
+      // Clear data on logout
+      setTransactions([]);
+      setBudgets([]);
+      setSavingsGoals([]);
+      setSubscriptions([]);
+      setBills([]);
+      setCategories([]);
+    }
+  }, [userId]);
+
+  // Save data whenever it changes
+  useEffect(() => {
+    if (userId) saveToLocalStorage(`transactions_${userId}`, transactions);
+  }, [transactions, userId]);
+  useEffect(() => {
+    if (userId) saveToLocalStorage(`budgets_${userId}`, budgets);
+  }, [budgets, userId]);
+  useEffect(() => {
+    if (userId) saveToLocalStorage(`savingsGoals_${userId}`, savingsGoals);
+  }, [savingsGoals, userId]);
+  useEffect(() => {
+    if (userId) saveToLocalStorage(`subscriptions_${userId}`, subscriptions);
+  }, [subscriptions, userId]);
+  useEffect(() => {
+    if (userId) saveToLocalStorage(`bills_${userId}`, bills);
+  }, [bills, userId]);
+  useEffect(() => {
+    if (userId) saveToLocalStorage(`categories_${userId}`, categories);
+  }, [categories, userId]);
+
 
   const addCategory = (category: Category) => {
     if (!categories.includes(category)) {
@@ -103,6 +178,17 @@ export function DataProvider({ children }: { children: ReactNode }) {
             }
             return budget;
         });
+        const existingCategories = updatedBudgets.map(b => b.category.toLowerCase().replace(' ', ''));
+        Object.entries(suggestedBudgets).forEach(([categoryKey, amount]) => {
+            if (!existingCategories.includes(categoryKey)) {
+                updatedBudgets.push({
+                    id: Date.now().toString() + categoryKey,
+                    category: categoryKey.charAt(0).toUpperCase() + categoryKey.slice(1),
+                    amount,
+                    spent: 0,
+                });
+            }
+        });
         return updatedBudgets;
     });
   };
@@ -132,7 +218,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const updateBill = (bill: Bill) => {
     setBills(prev => prev.map(b => b.id === bill.id ? bill : b).sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()));
-    if(bill.status === 'paid') {
+    if(bill.status === 'paid' && !transactions.some(t => t.billId === bill.id)) {
         addTransaction({
             description: bill.description,
             amount: bill.amount,

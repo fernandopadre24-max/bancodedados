@@ -1,5 +1,4 @@
 
-import { savingsGoals } from "@/lib/data"
 import { PageHeader } from "@/components/shared/page-header"
 import SavingsClient from "@/components/savings/savings-client"
 
@@ -16,7 +15,7 @@ export default function SavingsPage() {
         title="Metas de Poupança"
         description="Defina seus objetivos e veja suas economias crescerem."
       />
-      <SavingsClient initialGoals={savingsGoals} />
+      <SavingsClient />
     </>
   )
 }
