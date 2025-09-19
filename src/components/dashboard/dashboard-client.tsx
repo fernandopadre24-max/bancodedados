@@ -39,20 +39,12 @@ const getDaysUntilDueDate = (date: Date) => {
 };
 
 export default function DashboardClient({}: DashboardClientProps) {
-  const { transactions, budgets, savingsGoals, subscriptions, bills } = useData();
+  const data = useData();
 
-  const [clientData, setClientData] = React.useState<{
-    totalIncome: number;
-    totalExpenses: number;
-    balance: number;
-    totalToPay: number;
-    totalToReceive: number;
-    recentTransactions: Transaction[];
-    upcomingBills: Bill[];
-    upcomingSubscriptions: Subscription[];
-  } | null>(null);
+  const clientData = React.useMemo(() => {
+    if (!data) return null;
+    const { transactions, bills, subscriptions } = data;
 
-  React.useEffect(() => {
     const totalIncome = transactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0);
@@ -80,15 +72,17 @@ export default function DashboardClient({}: DashboardClientProps) {
       .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
       .slice(0, 3);
       
-    setClientData({ totalIncome, totalExpenses, balance, totalToPay, totalToReceive, recentTransactions, upcomingBills, upcomingSubscriptions });
+    return { totalIncome, totalExpenses, balance, totalToPay, totalToReceive, recentTransactions, upcomingBills, upcomingSubscriptions };
+  }, [data]);
 
-  }, [transactions, bills, subscriptions]);
 
-  if (!clientData) {
-    return <div className="grid gap-6"></div>; // Render empty initially to avoid hydration mismatch
+  if (!data || !clientData) {
+    return null; // or a loading skeleton
   }
-
+    
   const { totalIncome, totalExpenses, balance, totalToPay, totalToReceive, recentTransactions, upcomingBills, upcomingSubscriptions } = clientData;
+  const { budgets, savingsGoals } = data;
+
 
   return (
     <div className="grid gap-6">

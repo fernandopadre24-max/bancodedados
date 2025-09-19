@@ -320,6 +320,14 @@ export function DataProvider({ children }: { children: ReactNode }) {
     deleteBill,
   };
 
+  if (isLoading) {
+    return (
+        <DataContext.Provider value={undefined as any}>
+            {children}
+        </DataContext.Provider>
+    )
+  }
+
   return (
     <DataContext.Provider value={value}>
       {children}
