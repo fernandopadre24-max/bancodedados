@@ -330,8 +330,8 @@ export default function SubscriptionsClient() {
                                             {formatDate(sub.nextPaymentDate)}
                                         </span>
                                     </div>
-                                    {isSoon && <p className="text-xs text-muted-foreground">{daysLeft} dias restantes</p>}
-                                    {isPast && <p className="text-xs text-red-500 font-medium">Vencido</p>}
+                                    {daysLeft !== null && daysLeft !== undefined && isSoon && <p className="text-xs text-muted-foreground">{daysLeft} dias restantes</p>}
+                                    {daysLeft !== null && daysLeft !== undefined && isPast && <p className="text-xs text-red-500 font-medium">Vencido</p>}
                                 </TableCell>
                                 <TableCell className="text-right font-semibold">
                                     {formatCurrency(sub.amount)}

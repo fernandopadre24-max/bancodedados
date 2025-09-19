@@ -11,6 +11,7 @@ import { ArrowUpRight, ArrowDownLeft, DollarSign, Repeat, AlertCircle, Package, 
 import { cn } from "@/lib/utils"
 import { useData } from "@/context/DataContext"
 import { SummaryCard } from "./summary-card"
+import type { Transaction, Bill, Subscription } from "@/lib/types"
 
 interface DashboardClientProps {}
 
@@ -40,23 +41,25 @@ const getDaysUntilDueDate = (date: Date) => {
 export default function DashboardClient({}: DashboardClientProps) {
   const { transactions, budgets, savingsGoals, subscriptions, bills } = useData();
 
-  const { 
-    totalIncome, 
-    totalExpenses, 
-    balance, 
-    totalToPay, 
-    totalToReceive,
-    recentTransactions,
-    upcomingBills,
-    upcomingSubscriptions
-  } = React.useMemo(() => {
+  const [clientData, setClientData] = React.useState<{
+    totalIncome: number;
+    totalExpenses: number;
+    balance: number;
+    totalToPay: number;
+    totalToReceive: number;
+    recentTransactions: Transaction[];
+    upcomingBills: Bill[];
+    upcomingSubscriptions: Subscription[];
+  } | null>(null);
+
+  React.useEffect(() => {
     const totalIncome = transactions
       .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + t.amount, 0)
+      .reduce((sum, t) => sum + t.amount, 0);
     const totalExpenses = transactions
       .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + t.amount, 0)
-    const balance = totalIncome - totalExpenses
+      .reduce((sum, t) => sum + t.amount, 0);
+    const balance = totalIncome - totalExpenses;
 
     const pendingBills = bills.filter(b => b.status === 'pending');
     const totalToPay = pendingBills
@@ -76,10 +79,16 @@ export default function DashboardClient({}: DashboardClientProps) {
     const upcomingSubscriptions = subscriptions
       .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
       .slice(0, 3);
+      
+    setClientData({ totalIncome, totalExpenses, balance, totalToPay, totalToReceive, recentTransactions, upcomingBills, upcomingSubscriptions });
 
-    return { totalIncome, totalExpenses, balance, totalToPay, totalToReceive, recentTransactions, upcomingBills, upcomingSubscriptions }
   }, [transactions, bills, subscriptions]);
 
+  if (!clientData) {
+    return <div className="grid gap-6"></div>; // Or a loading skeleton
+  }
+
+  const { totalIncome, totalExpenses, balance, totalToPay, totalToReceive, recentTransactions, upcomingBills, upcomingSubscriptions } = clientData;
 
   return (
     <div className="grid gap-6">

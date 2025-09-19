@@ -332,8 +332,8 @@ export default function BillsClient() {
                                             {formatDate(bill.dueDate)}
                                         </span>
                                     </div>
-                                    {isSoon && !isPaid && <p className="text-xs text-muted-foreground">{daysLeft} dias restantes</p>}
-                                    {isPast && !isPaid && <p className="text-xs text-red-500 font-medium">Vencido</p>}
+                                    {daysLeft !== null && daysLeft !== undefined && isSoon && !isPaid && <p className="text-xs text-muted-foreground">{daysLeft} dias restantes</p>}
+                                    {daysLeft !== null && daysLeft !== undefined && isPast && !isPaid && <p className="text-xs text-red-500 font-medium">Vencido</p>}
                                 </TableCell>
                                 <TableCell>
                                    <div className='flex items-center gap-2'>
