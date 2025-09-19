@@ -49,7 +49,7 @@ export default function DashboardClient({}: DashboardClientProps) {
       .reduce((sum, t) => sum + t.amount, 0)
     const balance = totalIncome - totalExpenses
 
-    const pendingBills = bills.filter(b => b.status === 'pending');
+    const pendingBills = bills.filter(b => b.status === 'pending' && !b.installments);
     const totalToPay = pendingBills
         .filter(b => b.type === 'payable')
         .reduce((sum, b) => sum + b.amount, 0);
