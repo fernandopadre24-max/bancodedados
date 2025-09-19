@@ -2,10 +2,21 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { User } from 'firebase/auth';
 
 // Define a simplified user type for our mock
-export interface MockUser extends Omit<User, 'providerData' | 'toJSON' | 'delete' | 'getIdToken' | 'getIdTokenResult' | 'reload'> {
+export interface MockUser {
+    uid: string;
+    email: string | null;
+    emailVerified: boolean;
+    displayName: string | null;
+    isAnonymous: boolean;
+    photoURL: string | null;
+    metadata: {
+        creationTime?: string;
+        lastSignInTime?: string;
+    };
+    providerId: string;
+    tenantId: string | null;
     password?: string;
     isExample?: boolean;
 }
@@ -19,10 +30,7 @@ const initialMockUsers: MockUser[] = [
         displayName: 'Administrador',
         isAnonymous: false,
         photoURL: 'https://picsum.photos/seed/user-avatar-admin/40/40',
-        metadata: {
-            creationTime: new Date().toISOString(),
-            lastSignInTime: new Date().toISOString(),
-        },
+        metadata: {},
         providerId: 'password',
         tenantId: null,
         isExample: true,
@@ -35,10 +43,7 @@ const initialMockUsers: MockUser[] = [
         displayName: 'Usuário Padrão',
         isAnonymous: false,
         photoURL: 'https://picsum.photos/seed/user-avatar-user1/40/40',
-        metadata: {
-            creationTime: new Date().toISOString(),
-            lastSignInTime: new Date().toISOString(),
-        },
+        metadata: {},
         providerId: 'password',
         tenantId: null,
         isExample: true,
@@ -86,19 +91,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load users from localStorage, or use initial list if none found
-    const storedUsers = loadFromLocalStorage<MockUser[]>('mock_users', []);
-    if (storedUsers.length === 0) {
-      setUsers(initialMockUsers);
-    } else {
-      setUsers(storedUsers);
-    }
+    const storedUsers = loadFromLocalStorage<MockUser[]>('mock_users', initialMockUsers);
+    setUsers(storedUsers);
     
-    // Check for a user in sessionStorage
     try {
-        const sessionUser = sessionStorage.getItem('user');
-        if (sessionUser) {
-            setUser(JSON.parse(sessionUser));
+        const sessionUserJson = sessionStorage.getItem('user');
+        if (sessionUserJson) {
+            setUser(JSON.parse(sessionUserJson));
         }
     } catch (error) {
         console.error("Failed to parse user from sessionStorage", error);
@@ -107,11 +106,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setLoading(false);
 
   }, []);
-
-  useEffect(() => {
-    saveToLocalStorage('mock_users', users);
-  }, [users]);
-
 
   const login = (userToLogin: MockUser) => {
     try {
@@ -150,13 +144,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tenantId: null,
         isExample: false,
     };
-    setUsers(prev => [...prev, newUser]);
-    login(newUser); // Automatically log in the new user
+    const updatedUsers = [...users, newUser];
+    setUsers(updatedUsers);
+    saveToLocalStorage('mock_users', updatedUsers);
+    login(newUser);
     return newUser;
   };
 
   const updateUser = async (updatedUser: MockUser): Promise<void> => {
-    setUsers(prevUsers => prevUsers.map(u => u.uid === updatedUser.uid ? updatedUser : u));
+    const updatedUsers = users.map(u => u.uid === updatedUser.uid ? updatedUser : u);
+    setUsers(updatedUsers);
+    saveToLocalStorage('mock_users', updatedUsers);
     login(updatedUser);
   }
 

@@ -1,3 +1,4 @@
+
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -13,7 +14,7 @@ interface SummaryCardProps {
 
 export function SummaryCard({ title, value, icon, description, className, valueClassName }: SummaryCardProps) {
   return (
-    <Card className={cn("shadow-sm hover:shadow-md transition-shadow", className)}>
+    <Card className={cn("hover:border-primary/50 transition-colors", className)}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-medium font-body">{title}</CardTitle>
         {icon}

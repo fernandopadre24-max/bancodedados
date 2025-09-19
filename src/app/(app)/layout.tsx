@@ -22,7 +22,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
 
   if (loading || !user) {
     return (
-        <div className="flex h-screen items-center justify-center">
+        <div className="flex h-screen items-center justify-center bg-background">
             <Loader2 className="h-8 w-8 animate-spin text-primary" />
         </div>
     );
@@ -35,7 +35,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           <AppSidebar />
           <SidebarInset>
             <AppHeader />
-            <main className="flex-1 p-4 sm:p-6 lg:p-8 bg-background">
+            <main className="flex-1 p-4 sm:p-6 lg:p-8">
               {children}
             </main>
           </SidebarInset>

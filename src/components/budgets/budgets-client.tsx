@@ -31,6 +31,7 @@ import {
     AlertDialogTrigger,
   } from "@/components/ui/alert-dialog"
 import { useData } from '@/context/DataContext'
+import { Input } from '../ui/input'
 
 const formatCurrency = (amount: number) => {
   return new Intl.NumberFormat('pt-BR', {
@@ -40,10 +41,12 @@ const formatCurrency = (amount: number) => {
 }
 
 export default function BudgetsClient() {
-  const { budgets, deleteBudget, applyBudgetSuggestions, transactions } = useData();
+  const { budgets, deleteBudget, updateBudget, applyBudgetSuggestions, transactions } = useData();
   const [isSuggesting, setIsSuggesting] = React.useState(false)
   const [suggestedBudgets, setSuggestedBudgets] = React.useState<SuggestRealisticBudgetsOutput | null>(null)
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false)
+  const [isSuggestionDialogOpen, setIsSuggestionDialogOpen] = React.useState(false)
+  const [editingBudget, setEditingBudget] = React.useState<Budget | null>(null);
+  const [newAmount, setNewAmount] = React.useState(0);
   const { toast } = useToast();
 
   const { historicalSpendingData, income } = React.useMemo(() => {
@@ -70,7 +73,7 @@ export default function BudgetsClient() {
         contextRequests: ['Quero economizar mais dinheiro', 'Leve em conta a inflação'],
       })
       setSuggestedBudgets(suggestions)
-      setIsDialogOpen(true)
+      setIsSuggestionDialogOpen(true)
     } catch (error) {
       console.error('AI suggestion failed:', error)
       toast({
@@ -87,7 +90,7 @@ export default function BudgetsClient() {
     if (!suggestedBudgets) return;
     
     applyBudgetSuggestions(suggestedBudgets);
-    setIsDialogOpen(false);
+    setIsSuggestionDialogOpen(false);
     setSuggestedBudgets(null);
     toast({
         title: "Orçamentos Atualizados",
@@ -100,7 +103,24 @@ export default function BudgetsClient() {
     toast({
         title: "Orçamento Removido",
         description: "O orçamento foi removido com sucesso.",
+        variant: "destructive"
     });
+  }
+
+  function handleEditBudget(budget: Budget) {
+    setEditingBudget(budget);
+    setNewAmount(budget.amount);
+  }
+
+  function handleSaveEdit() {
+    if (editingBudget) {
+      updateBudget({ ...editingBudget, amount: newAmount });
+      setEditingBudget(null);
+      toast({
+        title: "Orçamento Atualizado",
+        description: `O orçamento para ${editingBudget.category} foi atualizado.`,
+      });
+    }
   }
 
   return (
@@ -122,7 +142,7 @@ export default function BudgetsClient() {
           const remaining = budget.amount - budget.spent
           let progressColor = 'bg-primary'
           if (progress > 75 && progress <= 90) {
-            progressColor = 'bg-yellow-500'
+            progressColor = 'bg-amber-500'
           } else if (progress > 90) {
             progressColor = 'bg-red-500'
           }
@@ -140,13 +160,13 @@ export default function BudgetsClient() {
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-1">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditBudget(budget)}>
                         <Pencil className="h-4 w-4" />
                         <span className="sr-only">Editar</span>
                     </Button>
                     <AlertDialog>
                         <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8">
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400">
                                 <Trash2 className="h-4 w-4" />
                                 <span className="sr-only">Apagar</span>
                             </Button>
@@ -169,18 +189,16 @@ export default function BudgetsClient() {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="flex justify-between items-center mb-2">
-                    <div
-                    className={`font-semibold ${
-                        progress > 90
-                        ? 'text-red-600'
-                        : progress > 75
-                        ? 'text-yellow-600'
-                        : 'text-primary'
-                    }`}
-                    >
-                    {progress.toFixed(0)}%
-                    </div>
+                <div
+                  className={`font-semibold mb-2 ${
+                      progress > 90
+                      ? 'text-red-500'
+                      : progress > 75
+                      ? 'text-amber-500'
+                      : 'text-primary'
+                  }`}
+                  >
+                  {progress.toFixed(0)}%
                 </div>
                 <Progress value={progress} indicatorClassName={progressColor} />
                 <div className="flex justify-between mt-2 text-sm text-muted-foreground">
@@ -196,7 +214,7 @@ export default function BudgetsClient() {
           )
         })}
       </div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+      <Dialog open={isSuggestionDialogOpen} onOpenChange={setIsSuggestionDialogOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
@@ -225,7 +243,7 @@ export default function BudgetsClient() {
                                 <div className='text-right'>
                                     <span className="font-bold">{formatCurrency(amount)}</span>
                                     {difference !== 0 && (
-                                        <p className={`text-xs ${difference > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                        <p className={`text-xs ${difference > 0 ? 'text-green-500' : 'text-red-500'}`}>
                                             ({difference > 0 ? '+' : ''}{formatCurrency(difference)})
                                         </p>
                                     )}
@@ -237,11 +255,32 @@ export default function BudgetsClient() {
              </div>
           )}
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
+            <Button variant="ghost" onClick={() => setIsSuggestionDialogOpen(false)}>Cancelar</Button>
             <Button onClick={handleApplySuggestions}>
                 <Check className="mr-2 h-4 w-4" />
                 Aplicar Sugestões
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={!!editingBudget} onOpenChange={() => setEditingBudget(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Editar Orçamento</DialogTitle>
+            <DialogDescription>
+              Atualize o valor para a categoria {editingBudget?.category}.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <Input
+              type="number"
+              value={newAmount}
+              onChange={(e) => setNewAmount(Number(e.target.value))}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => setEditingBudget(null)}>Cancelar</Button>
+            <Button onClick={handleSaveEdit}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

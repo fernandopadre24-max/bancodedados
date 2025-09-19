@@ -16,7 +16,7 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { AlertCircle, CheckCircle2, Pencil, Trash2, PlusCircle, CalendarIcon, Package, PackageOpen } from 'lucide-react';
+import { AlertCircle, CheckCircle2, Trash2, PlusCircle, CalendarIcon, Package, PackageOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
     AlertDialog,
@@ -61,7 +61,6 @@ import { cn } from '@/lib/utils';
 import { format } from "date-fns"
 import { ptBR } from "date-fns/locale"
 import { useData } from '@/context/DataContext';
-
 
 const billSchema = z.object({
   description: z.string().min(1, 'A descrição é obrigatória.'),
@@ -121,12 +120,11 @@ export default function BillsClient() {
   }, [bills]);
   
   function onAddSubmit(values: z.infer<typeof billSchema>) {
-    const newBill: Omit<Bill, 'id'> = {
+    const newBill: Omit<Bill, 'id' | 'status'> = {
         description: values.description,
         amount: values.amount,
         dueDate: values.dueDate,
         type: values.type,
-        status: 'pending',
     };
     if (values.installments && values.installments > 1) {
         newBill.installments = { current: 1, total: values.installments };
@@ -146,6 +144,7 @@ export default function BillsClient() {
     toast({
         title: "Conta Removida",
         description: "A conta foi removida com sucesso.",
+        variant: "destructive",
     });
   }
 
@@ -264,7 +263,7 @@ export default function BillsClient() {
             />
         </div>
         <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
+            <Button variant="ghost" onClick={() => setIsAddDialogOpen(false)}>Cancelar</Button>
             <Button type="submit">Criar Conta</Button>
         </DialogFooter>
         </form>
@@ -306,7 +305,7 @@ export default function BillsClient() {
                     <TableHead>Vencimento</TableHead>
                     <TableHead>Tipo</TableHead>
                     <TableHead className="text-right">Valor</TableHead>
-                    <TableHead className="w-[100px]">Ações</TableHead>
+                    <TableHead className="w-[100px] text-right">Ações</TableHead>
                     </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -320,15 +319,15 @@ export default function BillsClient() {
                         return (
                             <TableRow key={bill.id} className={cn(isPaid ? 'bg-green-500/10' : isPast ? 'bg-red-500/10' : '')}>
                                 <TableCell>
-                                    <Badge variant={isPaid ? 'default' : 'secondary'} className={cn(isPaid && 'bg-green-600', isPast && !isPaid && 'bg-red-600 text-white')}>
+                                    <Badge variant={isPaid ? 'default' : 'secondary'} className={cn(isPaid && 'bg-green-600 text-green-50', isPast && !isPaid && 'bg-red-600 text-red-50')}>
                                         {isPaid ? 'Paga' : 'Pendente'}
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="font-medium">{bill.description}</TableCell>
                                 <TableCell>
                                     <div className="flex items-center gap-2">
-                                        {isSoon && !isPaid && <AlertCircle className="h-4 w-4 text-yellow-500" />}
-                                        <span className={cn(isSoon && !isPaid && 'font-semibold text-yellow-600', isPast && !isPaid && 'font-semibold text-red-600')}>
+                                        {isSoon && !isPaid && <AlertCircle className="h-4 w-4 text-amber-500" />}
+                                        <span className={cn(isSoon && !isPaid && 'font-semibold text-amber-500', isPast && !isPaid && 'font-semibold text-red-500')}>
                                             {formatDate(bill.dueDate)}
                                         </span>
                                     </div>
@@ -345,16 +344,16 @@ export default function BillsClient() {
                                     {formatCurrency(bill.amount)}
                                 </TableCell>
                                 <TableCell>
-                                    <div className="flex items-center justify-end gap-2">
+                                    <div className="flex items-center justify-end gap-1">
                                         {!isPaid && (
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-600 hover:text-green-700" onClick={() => handleMarkAsPaid(bill)}>
+                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-green-500 hover:text-green-400" onClick={() => handleMarkAsPaid(bill)}>
                                                 <CheckCircle2 className="h-4 w-4" />
                                                 <span className="sr-only">Marcar como pago</span>
                                             </Button>
                                         )}
                                         <AlertDialog>
                                             <AlertDialogTrigger asChild>
-                                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400">
                                                     <Trash2 className="h-4 w-4" />
                                                     <span className="sr-only">Apagar</span>
                                                 </Button>
@@ -386,5 +385,3 @@ export default function BillsClient() {
     </>
   );
 }
-
-    

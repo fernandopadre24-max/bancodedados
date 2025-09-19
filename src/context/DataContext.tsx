@@ -17,20 +17,16 @@ const initialCategories = Object.keys(categoryIcons) as Category[];
 
 interface DataContextType {
   transactions: Transaction[];
-  setTransactions: React.Dispatch<React.SetStateAction<Transaction[]>>;
   budgets: Budget[];
-  setBudgets: React.Dispatch<React.SetStateAction<Budget[]>>;
   savingsGoals: SavingsGoal[];
-  setSavingsGoals: React.Dispatch<React.SetStateAction<SavingsGoal[]>>;
   subscriptions: Subscription[];
-  setSubscriptions: React.Dispatch<React.SetStateAction<Subscription[]>>;
   bills: Bill[];
-  setBills: React.Dispatch<React.SetStateAction<Bill[]>>;
   categories: Category[];
   addCategory: (category: Category) => void;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
   deleteTransaction: (id: string) => void;
   addSavingsGoal: (goal: Omit<SavingsGoal, 'id'>) => void;
+  updateSavingsGoal: (goal: SavingsGoal) => void;
   deleteSavingsGoal: (id: string) => void;
   addSubscription: (subscription: Omit<Subscription, 'id'>) => void;
   updateSubscription: (subscription: Subscription) => void;
@@ -38,20 +34,18 @@ interface DataContextType {
   updateBudget: (budget: Budget) => void;
   deleteBudget: (id: string) => void;
   applyBudgetSuggestions: (suggestedBudgets: Record<string, number>) => void;
-  addBill: (bill: Omit<Bill, 'id'>) => void;
+  addBill: (bill: Omit<Bill, 'id' | 'status'>) => void;
   updateBill: (bill: Bill) => void;
   deleteBill: (id: string) => void;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
 
-// Helper function to get data from localStorage
-const loadFromLocalStorage = <T,>(key: string): T | null => {
-    if (typeof window === 'undefined') return null;
+const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') return defaultValue;
     try {
         const item = window.localStorage.getItem(key);
         if (item) {
-            // Dates are stored as strings, so we need to parse them back
             return JSON.parse(item, (key, value) => {
                 if ((key === 'date' || key === 'dueDate' || key === 'nextPaymentDate') && value) {
                     return new Date(value);
@@ -62,10 +56,9 @@ const loadFromLocalStorage = <T,>(key: string): T | null => {
     } catch (error) {
         console.warn(`Error reading localStorage key “${key}”:`, error);
     }
-    return null;
+    return defaultValue;
 };
 
-// Helper function to save data to localStorage
 const saveToLocalStorage = <T,>(key: string, value: T) => {
     if (typeof window === 'undefined') return;
     try {
@@ -78,67 +71,49 @@ const saveToLocalStorage = <T,>(key: string, value: T) => {
 export function DataProvider({ children }: { children: ReactNode }) {
   const { user } = useAuth();
   const userId = user?.uid;
-  const isExampleUser = user?.isExample ?? false;
-
-  const [isLoading, setIsLoading] = useState(true);
+  
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [budgets, setBudgets] = useState<Budget[]>([]);
   const [savingsGoals, setSavingsGoals] = useState<SavingsGoal[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
+  const [categories, setCategories] = useState<Category[]>(initialCategories);
+  const [isLoading, setIsLoading] = useState(true);
 
-
-  // Load data when user logs in
   useEffect(() => {
     if (userId) {
-      setIsLoading(true);
-      
-      const transactionsData = loadFromLocalStorage<Transaction[]>(`transactions_${userId}`);
-      const budgetsData = loadFromLocalStorage<Budget[]>(`budgets_${userId}`);
-      const savingsGoalsData = loadFromLocalStorage<SavingsGoal[]>(`savingsGoals_${userId}`);
-      const subscriptionsData = loadFromLocalStorage<Subscription[]>(`subscriptions_${userId}`);
-      const billsData = loadFromLocalStorage<Bill[]>(`bills_${userId}`);
-      const categoriesData = loadFromLocalStorage<Category[]>(`categories_${userId}`);
+      const userKey = `data_${userId}`;
+      const userData = loadFromLocalStorage<any>(userKey, null);
 
-      if (transactionsData === null) {
-        // Data for this user does not exist, initialize it
+      if (userData) {
+        setTransactions(userData.transactions || []);
+        setBudgets(userData.budgets || []);
+        setSavingsGoals(userData.savingsGoals || []);
+        setSubscriptions(userData.subscriptions || []);
+        setBills(userData.bills || []);
+        setCategories(userData.categories || initialCategories);
+      } else {
+        // New user or example user logging in for the first time
+        const isExample = user?.isExample;
         const initialData = {
-          transactions: isExampleUser ? initialTransactionsData : [],
-          budgets: isExampleUser ? initialBudgetsData : [],
-          savingsGoals: isExampleUser ? initialSavingsGoalsData : [],
-          subscriptions: isExampleUser ? initialSubscriptionsData : [],
-          bills: isExampleUser ? initialBillsData : [],
+          transactions: isExample ? initialTransactionsData : [],
+          budgets: isExample ? initialBudgetsData : [],
+          savingsGoals: isExample ? initialSavingsGoalsData : [],
+          subscriptions: isExample ? initialSubscriptionsData : [],
+          bills: isExample ? initialBillsData : [],
           categories: initialCategories,
         };
-
         setTransactions(initialData.transactions);
         setBudgets(initialData.budgets);
         setSavingsGoals(initialData.savingsGoals);
         setSubscriptions(initialData.subscriptions);
         setBills(initialData.bills);
         setCategories(initialData.categories);
-
-        // Save this initial state to localStorage
-        saveToLocalStorage(`transactions_${userId}`, initialData.transactions);
-        saveToLocalStorage(`budgets_${userId}`, initialData.budgets);
-        saveToLocalStorage(`savingsGoals_${userId}`, initialData.savingsGoals);
-        saveToLocalStorage(`subscriptions_${userId}`, initialData.subscriptions);
-        saveToLocalStorage(`bills_${userId}`, initialData.bills);
-        saveToLocalStorage(`categories_${userId}`, initialData.categories);
-
-      } else {
-        // Data exists, load it from storage
-        setTransactions(transactionsData || []);
-        setBudgets(budgetsData || []);
-        setSavingsGoals(savingsGoalsData || []);
-        setSubscriptions(subscriptionsData || []);
-        setBills(billsData || []);
-        setCategories(categoriesData || initialCategories);
+        saveToLocalStorage(userKey, initialData);
       }
       setIsLoading(false);
     } else {
-      // Clear data on logout
+      // No user, clear all data
       setTransactions([]);
       setBudgets([]);
       setSavingsGoals([]);
@@ -146,44 +121,15 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setBills([]);
       setCategories(initialCategories);
     }
-  }, [userId, isExampleUser]);
+  }, [userId, user?.isExample]);
 
-  // Save all data whenever any piece of it changes, but only after initial load is complete
+  // Save all data to a single user-specific key whenever anything changes
   useEffect(() => {
     if (!isLoading && userId) {
-        saveToLocalStorage(`transactions_${userId}`, transactions);
+      const userData = { transactions, budgets, savingsGoals, subscriptions, bills, categories };
+      saveToLocalStorage(`data_${userId}`, userData);
     }
-  }, [transactions, userId, isLoading]);
-
-  useEffect(() => {
-    if (!isLoading && userId) {
-        saveToLocalStorage(`budgets_${userId}`, budgets);
-    }
-  }, [budgets, userId, isLoading]);
-
-  useEffect(() => {
-    if (!isLoading && userId) {
-        saveToLocalStorage(`savingsGoals_${userId}`, savingsGoals);
-    }
-    }, [savingsGoals, userId, isLoading]);
-
-  useEffect(() => {
-    if (!isLoading && userId) {
-        saveToLocalStorage(`subscriptions_${userId}`, subscriptions);
-    }
-    }, [subscriptions, userId, isLoading]);
-
-  useEffect(() => {
-    if (!isLoading && userId) {
-        saveToLocalStorage(`bills_${userId}`, bills);
-    }
-    }, [bills, userId, isLoading]);
-
-  useEffect(() => {
-    if (!isLoading && userId) {
-        saveToLocalStorage(`categories_${userId}`, categories);
-    }
-    }, [categories, userId, isLoading]);
+  }, [transactions, budgets, savingsGoals, subscriptions, bills, categories, isLoading, userId]);
 
 
   const addCategory = (category: Category) => {
@@ -203,6 +149,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const addSavingsGoal = (goal: Omit<SavingsGoal, 'id'>) => {
     setSavingsGoals(prev => [...prev, {...goal, id: Date.now().toString()}]);
   };
+
+  const updateSavingsGoal = (goal: SavingsGoal) => {
+    setSavingsGoals(prev => prev.map(g => g.id === goal.id ? goal : g));
+  }
 
   const deleteSavingsGoal = (id: string) => {
     setSavingsGoals(prev => prev.filter(g => g.id !== id));
@@ -252,17 +202,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
     });
   };
 
-  const addBill = (bill: Omit<Bill, 'id'>) => {
-    const newBill = { ...bill, id: Date.now().toString() };
+  const addBill = (bill: Omit<Bill, 'id' | 'status'>) => {
+    const newBillBase = { ...bill, id: Date.now().toString(), status: 'pending' as const };
     if (bill.installments && bill.installments.total > 1) {
-        // Create multiple bills for installments
         const installmentBills: Bill[] = [];
         for (let i = 0; i < bill.installments.total; i++) {
             const dueDate = new Date(bill.dueDate);
             dueDate.setMonth(dueDate.getMonth() + i);
             installmentBills.push({
-                ...newBill,
-                id: `${newBill.id}-${i}`,
+                ...newBillBase,
+                id: `${newBillBase.id}-${i}`,
                 description: `${bill.description} (${i + 1}/${bill.installments.total})`,
                 amount: bill.amount / bill.installments.total,
                 dueDate: dueDate,
@@ -271,7 +220,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
         }
         setBills(prev => [...prev, ...installmentBills].sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()));
     } else {
-        setBills(prev => [...prev, newBill].sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()));
+        setBills(prev => [...prev, newBillBase].sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()));
     }
   };
 
@@ -279,7 +228,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setBills(prev => prev.map(b => b.id === bill.id ? bill : b).sort((a,b) => a.dueDate.getTime() - b.dueDate.getTime()));
     if(bill.status === 'paid' && !transactions.some(t => t.billId === bill.id)) {
         addTransaction({
-            description: bill.description,
+            description: `Pagamento: ${bill.description}`,
             amount: bill.amount,
             type: bill.type === 'payable' ? 'expense' : 'income',
             category: 'Contas',
@@ -294,20 +243,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
 
   const value = {
     transactions,
-    setTransactions,
     budgets,
-    setBudgets,
     savingsGoals,
-    setSavingsGoals,
     subscriptions,
-    setSubscriptions,
     bills,
-    setBills,
     categories,
     addCategory,
     addTransaction,
     deleteTransaction,
     addSavingsGoal,
+    updateSavingsGoal,
     deleteSavingsGoal,
     addSubscription,
     updateSubscription,
@@ -321,11 +266,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   if (isLoading) {
-    return (
-        <DataContext.Provider value={undefined as any}>
-            {children}
-        </DataContext.Provider>
-    )
+    return null;
   }
 
   return (

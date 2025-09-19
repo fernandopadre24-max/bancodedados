@@ -65,10 +65,6 @@ const transactionSchema = z.object({
   type: z.enum(['income', 'expense']),
 });
 
-const categorySchema = z.object({
-    name: z.string().min(2, 'O nome da categoria é obrigatório.'),
-});
-
 const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
@@ -85,22 +81,20 @@ const formatDate = (date: Date) => {
 };
 
 export default function TransactionsClient() {
-  const { transactions, addTransaction, deleteTransaction, categories, addCategory } = useData();
+  const { transactions, addTransaction, deleteTransaction, categories } = useData();
   const [isTransactionDialogOpen, setIsTransactionDialogOpen] = React.useState(false);
-  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = React.useState(false);
   const { toast } = useToast();
 
   const transactionForm = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: 'expense',
+      description: '',
+      amount: 0,
+      category: '',
     },
   });
 
-  const categoryForm = useForm<z.infer<typeof categorySchema>>({
-    resolver: zodResolver(categorySchema),
-    defaultValues: { name: '' },
-  });
 
   function onTransactionSubmit(values: z.infer<typeof transactionSchema>) {
     addTransaction(values);
@@ -112,64 +106,18 @@ export default function TransactionsClient() {
     setIsTransactionDialogOpen(false);
   }
 
-  function onCategorySubmit(values: z.infer<typeof categorySchema>) {
-    addCategory(values.name);
-    toast({
-        title: "Categoria Adicionada",
-        description: `A categoria "${values.name}" foi adicionada.`,
-    })
-    categoryForm.reset();
-    setIsCategoryDialogOpen(false);
-  }
-
-
   function handleDeleteTransaction(transactionId: string) {
     deleteTransaction(transactionId);
     toast({
         title: "Transação Removida",
         description: "A transação foi removida com sucesso.",
+        variant: 'destructive',
     });
   }
 
   return (
     <>
       <PageHeader title="Transações" description="Veja e gerencie suas receitas e despesas.">
-        <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
-            <DialogTrigger asChild>
-                <Button variant="outline">
-                    <FolderPlus className="mr-2 h-4 w-4" />
-                    Gerenciar Categorias
-                </Button>
-            </DialogTrigger>
-            <DialogContent>
-                <DialogHeader>
-                    <DialogTitle>Nova Categoria</DialogTitle>
-                    <DialogDescription>
-                        Adicione uma nova categoria para organizar suas transações.
-                    </DialogDescription>
-                </DialogHeader>
-                <Form {...categoryForm}>
-                    <form onSubmit={categoryForm.handleSubmit(onCategorySubmit)} className="space-y-4">
-                        <FormField
-                        control={categoryForm.control}
-                        name="name"
-                        render={({ field }) => (
-                            <FormItem>
-                            <FormLabel>Nome da Categoria</FormLabel>
-                            <FormControl>
-                                <Input placeholder="ex: Educação" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                            </FormItem>
-                        )}
-                        />
-                        <DialogFooter>
-                            <Button type="submit">Criar Categoria</Button>
-                        </DialogFooter>
-                    </form>
-                </Form>
-            </DialogContent>
-        </Dialog>
         <Dialog open={isTransactionDialogOpen} onOpenChange={setIsTransactionDialogOpen}>
           <DialogTrigger asChild>
             <Button>
@@ -258,6 +206,7 @@ export default function TransactionsClient() {
                   />
                 </div>
                 <DialogFooter>
+                  <Button variant="ghost" onClick={() => setIsTransactionDialogOpen(false)}>Cancelar</Button>
                   <Button type="submit">Salvar Transação</Button>
                 </DialogFooter>
               </form>
@@ -265,7 +214,7 @@ export default function TransactionsClient() {
           </DialogContent>
         </Dialog>
       </PageHeader>
-      <div className="rounded-lg border shadow-sm">
+      <div className="rounded-lg border shadow-sm bg-card">
         <Table>
           <TableHeader>
             <TableRow>
@@ -273,7 +222,7 @@ export default function TransactionsClient() {
               <TableHead>Descrição</TableHead>
               <TableHead>Categoria</TableHead>
               <TableHead className="text-right">Valor</TableHead>
-              <TableHead className="w-[100px]">Ações</TableHead>
+              <TableHead className="w-[100px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -281,7 +230,7 @@ export default function TransactionsClient() {
               const Icon = categoryIcons[transaction.category as keyof typeof categoryIcons] || Tag;
               return (
                 <TableRow key={transaction.id}>
-                  <TableCell>{formatDate(transaction.date)}</TableCell>
+                  <TableCell className="text-muted-foreground">{formatDate(transaction.date)}</TableCell>
                   <TableCell className="font-medium">{transaction.description}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className="flex items-center gap-2 w-fit">
@@ -291,7 +240,7 @@ export default function TransactionsClient() {
                   </TableCell>
                   <TableCell
                     className={`text-right font-semibold ${
-                      transaction.type === 'income' ? 'text-green-600' : 'text-foreground'
+                      transaction.type === 'income' ? 'text-green-500' : 'text-red-500'
                     }`}
                   >
                     {transaction.type === 'income' ? '+' : '-'}
@@ -299,13 +248,9 @@ export default function TransactionsClient() {
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center justify-end gap-2">
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                            <Pencil className="h-4 w-4" />
-                            <span className="sr-only">Editar</span>
-                        </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400">
                                     <Trash2 className="h-4 w-4" />
                                     <span className="sr-only">Apagar</span>
                                 </Button>
@@ -336,5 +281,3 @@ export default function TransactionsClient() {
     </>
   );
 }
-
-    

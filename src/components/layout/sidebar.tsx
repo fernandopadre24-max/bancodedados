@@ -34,7 +34,7 @@ const menuItems = [
   { href: '/bills', label: 'Contas', icon: Receipt },
   { href: '/budgets', label: 'Orçamentos', icon: BookText },
   { href: '/reports', label: 'Relatórios', icon: LineChart },
-  { href: '/savings', label: 'Metas de Poupança', icon: PiggyBank },
+  { href: '/savings', label: 'Metas', icon: PiggyBank },
   { href: '/subscriptions', label: 'Assinaturas', icon: Repeat },
 ];
 
@@ -86,14 +86,6 @@ export default function AppSidebar() {
               >
                 <Settings />
                 <span>Configurações</span>
-              </SidebarMenuButton>
-            </Link>
-          </SidebarMenuItem>
-          <SidebarMenuItem>
-            <Link href="/help">
-              <SidebarMenuButton tooltip="Ajuda">
-                <HelpCircle />
-                <span>Ajuda</span>
               </SidebarMenuButton>
             </Link>
           </SidebarMenuItem>
