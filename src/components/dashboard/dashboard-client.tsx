@@ -25,7 +25,7 @@ const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('pt-BR', {
         month: 'short',
         day: 'numeric',
-    }).format(date);
+    }).format(new Date(date));
 };
 
 const getDaysUntilDueDate = (date: Date) => {
@@ -40,7 +40,16 @@ const getDaysUntilDueDate = (date: Date) => {
 export default function DashboardClient({}: DashboardClientProps) {
   const { transactions, budgets, savingsGoals, subscriptions, bills } = useData();
 
-  const { totalIncome, totalExpenses, balance, totalToPay, totalToReceive } = React.useMemo(() => {
+  const { 
+    totalIncome, 
+    totalExpenses, 
+    balance, 
+    totalToPay, 
+    totalToReceive,
+    recentTransactions,
+    upcomingBills,
+    upcomingSubscriptions
+  } = React.useMemo(() => {
     const totalIncome = transactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0)
@@ -49,7 +58,7 @@ export default function DashboardClient({}: DashboardClientProps) {
       .reduce((sum, t) => sum + t.amount, 0)
     const balance = totalIncome - totalExpenses
 
-    const pendingBills = bills.filter(b => b.status === 'pending' && !b.installments);
+    const pendingBills = bills.filter(b => b.status === 'pending');
     const totalToPay = pendingBills
         .filter(b => b.type === 'payable')
         .reduce((sum, b) => sum + b.amount, 0);
@@ -57,19 +66,20 @@ export default function DashboardClient({}: DashboardClientProps) {
         .filter(b => b.type === 'receivable')
         .reduce((sum, b) => sum + b.amount, 0);
 
-    return { totalIncome, totalExpenses, balance, totalToPay, totalToReceive }
-  }, [transactions, bills])
-
-  const recentTransactions = transactions.slice(0, 5);
+    const recentTransactions = transactions.slice(0, 5);
   
-  const upcomingBills = bills
-    .filter(b => b.status === 'pending')
-    .sort((a, b) => a.dueDate.getTime() - b.dueDate.getTime())
-    .slice(0, 3);
+    const upcomingBills = bills
+      .filter(b => b.status === 'pending')
+      .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+      .slice(0, 3);
+  
+    const upcomingSubscriptions = subscriptions
+      .sort((a, b) => new Date(a.nextPaymentDate).getTime() - new Date(b.nextPaymentDate).getTime())
+      .slice(0, 3);
 
-  const upcomingSubscriptions = subscriptions
-    .sort((a, b) => a.nextPaymentDate.getTime() - b.nextPaymentDate.getTime())
-    .slice(0, 3);
+    return { totalIncome, totalExpenses, balance, totalToPay, totalToReceive, recentTransactions, upcomingBills, upcomingSubscriptions }
+  }, [transactions, bills, subscriptions]);
+
 
   return (
     <div className="grid gap-6">
@@ -253,5 +263,3 @@ export default function DashboardClient({}: DashboardClientProps) {
     </div>
   )
 }
-
-    
