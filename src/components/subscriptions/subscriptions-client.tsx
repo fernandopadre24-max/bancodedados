@@ -91,10 +91,28 @@ export default function SubscriptionsClient() {
   const [isEditDialogOpen, setIsEditDialogOpen] = React.useState(false);
   const [editingSubscription, setEditingSubscription] = React.useState<Subscription | null>(null);
   const { toast } = useToast();
+  const [subStatus, setSubStatus] = React.useState<Record<string, { daysLeft: number | null }>>({});
 
   const form = useForm<z.infer<typeof subscriptionSchema>>({
     resolver: zodResolver(subscriptionSchema),
   });
+
+  React.useEffect(() => {
+    const getDaysUntilNextPayment = (date: Date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const nextPayment = new Date(date);
+        nextPayment.setHours(0, 0, 0, 0);
+        const diffTime = nextPayment.getTime() - today.getTime();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+
+    const newStatus: Record<string, { daysLeft: number | null }> = {};
+    subscriptions.forEach(sub => {
+        newStatus[sub.id] = { daysLeft: getDaysUntilNextPayment(sub.nextPaymentDate) };
+    });
+    setSubStatus(newStatus);
+  }, [subscriptions]);
   
   React.useEffect(() => {
     if (isEditDialogOpen && editingSubscription) {
@@ -145,15 +163,6 @@ export default function SubscriptionsClient() {
     handleCloseDialogs();
   }
 
-
-  const getDaysUntilNextPayment = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const nextPayment = new Date(date);
-    nextPayment.setHours(0, 0, 0, 0);
-    const diffTime = nextPayment.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
 
   function handleDeleteSubscription(subscriptionId: string) {
     deleteSubscription(subscriptionId);
@@ -304,9 +313,10 @@ export default function SubscriptionsClient() {
                 </TableHeader>
                 <TableBody>
                     {subscriptions.map((sub) => {
-                        const daysLeft = getDaysUntilNextPayment(sub.nextPaymentDate);
-                        const isSoon = daysLeft <= 7 && daysLeft >= 0;
-                        const isPast = daysLeft < 0;
+                        const status = subStatus[sub.id];
+                        const daysLeft = status?.daysLeft;
+                        const isSoon = daysLeft !== null && daysLeft !== undefined && daysLeft <= 7 && daysLeft >= 0;
+                        const isPast = daysLeft !== null && daysLeft !== undefined && daysLeft < 0;
                         return (
                             <TableRow key={sub.id} className={isPast ? 'bg-red-500/10' : ''}>
                                 <TableCell className="font-medium">{sub.name}</TableCell>

@@ -90,6 +90,7 @@ export default function BillsClient() {
   const { bills, addBill, updateBill, deleteBill } = useData();
   const [isAddDialogOpen, setIsAddDialogOpen] = React.useState(false);
   const { toast } = useToast();
+  const [billStatus, setBillStatus] = React.useState<Record<string, { daysLeft: number | null }>>({});
 
   const form = useForm<z.infer<typeof billSchema>>({
     resolver: zodResolver(billSchema),
@@ -101,6 +102,23 @@ export default function BillsClient() {
         installments: 1
     }
   });
+
+  React.useEffect(() => {
+    const getDaysUntilDueDate = (date: Date) => {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const dueDate = new Date(date);
+        dueDate.setHours(0, 0, 0, 0);
+        const diffTime = dueDate.getTime() - today.getTime();
+        return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    };
+    
+    const newStatus: Record<string, { daysLeft: number | null }> = {};
+    bills.forEach(bill => {
+        newStatus[bill.id] = { daysLeft: getDaysUntilDueDate(bill.dueDate) };
+    });
+    setBillStatus(newStatus);
+  }, [bills]);
   
   function onAddSubmit(values: z.infer<typeof billSchema>) {
     const newBill: Omit<Bill, 'id'> = {
@@ -138,15 +156,6 @@ export default function BillsClient() {
       description: `${bill.description} foi marcada como paga.`,
     });
   }
-  
-  const getDaysUntilDueDate = (date: Date) => {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const dueDate = new Date(date);
-    dueDate.setHours(0, 0, 0, 0);
-    const diffTime = dueDate.getTime() - today.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-  };
 
   const renderForm = (submitHandler: (values: z.infer<typeof billSchema>) => void) => (
     <Form {...form}>
@@ -302,9 +311,10 @@ export default function BillsClient() {
                 </TableHeader>
                 <TableBody>
                     {bills.map((bill) => {
-                        const daysLeft = getDaysUntilDueDate(bill.dueDate);
-                        const isSoon = daysLeft <= 7 && daysLeft >= 0;
-                        const isPast = daysLeft < 0;
+                        const status = billStatus[bill.id];
+                        const daysLeft = status?.daysLeft;
+                        const isSoon = daysLeft !== null && daysLeft !== undefined && daysLeft <= 7 && daysLeft >= 0;
+                        const isPast = daysLeft !== null && daysLeft !== undefined && daysLeft < 0;
                         const isPaid = bill.status === 'paid';
                         
                         return (
