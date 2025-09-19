@@ -66,17 +66,26 @@ export default function SettingsClient() {
   });
 
   React.useEffect(() => {
+    const storedTheme = localStorage.getItem('theme') || 'system';
+    setTheme(storedTheme);
+  }, []);
+
+  React.useEffect(() => {
     const root = window.document.documentElement
-    if (theme === 'dark') {
-      root.classList.add('dark')
-    } else if (theme === 'light') {
-      root.classList.remove('dark')
+    root.classList.remove('light', 'dark')
+
+    if (theme === 'system') {
+      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+      root.classList.add(systemTheme)
     } else {
-        const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
-        if(systemTheme === 'dark') root.classList.add('dark')
-        else root.classList.remove('dark')
+        root.classList.add(theme)
     }
   }, [theme])
+
+  const handleThemeChange = (newTheme: string) => {
+    localStorage.setItem('theme', newTheme);
+    setTheme(newTheme);
+  }
 
   function onCategorySubmit(values: z.infer<typeof categorySchema>) {
     addCategory(values.name);
@@ -125,7 +134,7 @@ export default function SettingsClient() {
         <CardContent>
           <div className="flex items-center justify-between">
             <Label htmlFor="theme">Tema</Label>
-            <Select value={theme} onValueChange={setTheme}>
+            <Select value={theme} onValueChange={handleThemeChange}>
               <SelectTrigger className="w-[180px]">
                 <SelectValue placeholder="Selecione o tema" />
               </SelectTrigger>
