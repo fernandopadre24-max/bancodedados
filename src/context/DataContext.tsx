@@ -53,7 +53,7 @@ const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
         if (item) {
             // Dates are stored as strings, so we need to parse them back
             return JSON.parse(item, (key, value) => {
-                if (key === 'date' || key === 'dueDate' || key === 'nextPaymentDate') {
+                if ((key === 'date' || key === 'dueDate' || key === 'nextPaymentDate') && value) {
                     return new Date(value);
                 }
                 return value;
@@ -85,8 +85,10 @@ export function DataProvider({ children }: { children: ReactNode }) {
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [bills, setBills] = useState<Bill[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
+  const [isDataLoaded, setIsDataLoaded] = useState(false);
 
-  // Load data when user changes
+
+  // Load data when user logs in
   useEffect(() => {
     if (userId) {
       setTransactions(loadFromLocalStorage(`transactions_${userId}`, initialTransactionsData));
@@ -95,6 +97,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setSubscriptions(loadFromLocalStorage(`subscriptions_${userId}`, initialSubscriptionsData));
       setBills(loadFromLocalStorage(`bills_${userId}`, initialBillsData));
       setCategories(loadFromLocalStorage(`categories_${userId}`, initialCategories));
+      setIsDataLoaded(true);
     } else {
       // Clear data on logout
       setTransactions([]);
@@ -103,28 +106,29 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setSubscriptions([]);
       setBills([]);
       setCategories([]);
+      setIsDataLoaded(false);
     }
   }, [userId]);
 
-  // Save data whenever it changes
+  // Save data whenever it changes, but only after it has been loaded
   useEffect(() => {
-    if (userId) saveToLocalStorage(`transactions_${userId}`, transactions);
-  }, [transactions, userId]);
+    if (userId && isDataLoaded) saveToLocalStorage(`transactions_${userId}`, transactions);
+  }, [transactions, userId, isDataLoaded]);
   useEffect(() => {
-    if (userId) saveToLocalStorage(`budgets_${userId}`, budgets);
-  }, [budgets, userId]);
+    if (userId && isDataLoaded) saveToLocalStorage(`budgets_${userId}`, budgets);
+  }, [budgets, userId, isDataLoaded]);
   useEffect(() => {
-    if (userId) saveToLocalStorage(`savingsGoals_${userId}`, savingsGoals);
-  }, [savingsGoals, userId]);
+    if (userId && isDataLoaded) saveToLocalStorage(`savingsGoals_${userId}`, savingsGoals);
+  }, [savingsGoals, userId, isDataLoaded]);
   useEffect(() => {
-    if (userId) saveToLocalStorage(`subscriptions_${userId}`, subscriptions);
-  }, [subscriptions, userId]);
+    if (userId && isDataLoaded) saveToLocalStorage(`subscriptions_${userId}`, subscriptions);
+  }, [subscriptions, userId, isDataLoaded]);
   useEffect(() => {
-    if (userId) saveToLocalStorage(`bills_${userId}`, bills);
-  }, [bills, userId]);
+    if (userId && isDataLoaded) saveToLocalStorage(`bills_${userId}`, bills);
+  }, [bills, userId, isDataLoaded]);
   useEffect(() => {
-    if (userId) saveToLocalStorage(`categories_${userId}`, categories);
-  }, [categories, userId]);
+    if (userId && isDataLoaded) saveToLocalStorage(`categories_${userId}`, categories);
+  }, [categories, userId, isDataLoaded]);
 
 
   const addCategory = (category: Category) => {

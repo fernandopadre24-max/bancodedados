@@ -81,9 +81,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Load users from localStorage, or use initial list
-    const storedUsers = loadFromLocalStorage<MockUser[]>('mock_users', initialMockUsers);
-    setUsers(storedUsers);
+    // Load users from localStorage, or use initial list if none found
+    const storedUsers = loadFromLocalStorage<MockUser[]>('mock_users', []);
+    if (storedUsers.length === 0) {
+      setUsers(initialMockUsers);
+      saveToLocalStorage('mock_users', initialMockUsers);
+    } else {
+      setUsers(storedUsers);
+    }
     
     // Check for a user in sessionStorage
     try {
@@ -100,8 +105,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    // Save users to localStorage whenever the list changes
-    saveToLocalStorage('mock_users', users);
+    // This effect runs only when `users` state changes, preventing unnecessary writes.
+    // It avoids running on initial mount before `users` is properly initialized.
+    if (users.length > 0) {
+      saveToLocalStorage('mock_users', users);
+    }
   }, [users]);
 
 
@@ -131,7 +139,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         tenantId: null,
     };
     setUsers(prev => [...prev, newUser]);
-    login(newUser);
+    login(newUser); // Automatically log in the new user
     return newUser;
   };
 
