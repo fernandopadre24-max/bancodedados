@@ -144,7 +144,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
       setSavingsGoals([]);
       setSubscriptions([]);
       setBills([]);
-      setCategories([]);
+      setCategories(initialCategories);
     }
   }, [userId, isExampleUser]);
 
@@ -152,13 +152,38 @@ export function DataProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!isLoading && userId) {
         saveToLocalStorage(`transactions_${userId}`, transactions);
+    }
+  }, [transactions, userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && userId) {
         saveToLocalStorage(`budgets_${userId}`, budgets);
+    }
+  }, [budgets, userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && userId) {
         saveToLocalStorage(`savingsGoals_${userId}`, savingsGoals);
+    }
+    }, [savingsGoals, userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && userId) {
         saveToLocalStorage(`subscriptions_${userId}`, subscriptions);
+    }
+    }, [subscriptions, userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && userId) {
         saveToLocalStorage(`bills_${userId}`, bills);
+    }
+    }, [bills, userId, isLoading]);
+
+  useEffect(() => {
+    if (!isLoading && userId) {
         saveToLocalStorage(`categories_${userId}`, categories);
     }
-  }, [transactions, budgets, savingsGoals, subscriptions, bills, categories, userId, isLoading]);
+    }, [categories, userId, isLoading]);
 
 
   const addCategory = (category: Category) => {
