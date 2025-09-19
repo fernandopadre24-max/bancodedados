@@ -10,12 +10,10 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { User, Camera, Loader2 } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/context/AuthContext'
-import { updateProfile } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
 
 
 export default function ProfileClient() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const { toast } = useToast()
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -48,18 +46,20 @@ export default function ProfileClient() {
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!auth.currentUser) return;
+    if (!user) return;
 
     setIsLoading(true);
     try {
         // Here you would typically upload the avatarPreview to a storage service
         // (like Firebase Storage) and get a public URL.
         // For this example, we'll assume the base64 string is the URL.
-        // In a real app, replace `avatarPreview` with the uploaded image URL.
-        await updateProfile(auth.currentUser, {
+        const updatedUserData = {
+            ...user,
             displayName: displayName,
-            photoURL: avatarPreview,
-        });
+            photoURL: avatarPreview || user.photoURL,
+        };
+        
+        await updateUser(updatedUserData);
 
         toast({
             title: "Perfil Atualizado",
@@ -80,7 +80,7 @@ export default function ProfileClient() {
     <Card>
       <CardHeader>
         <CardTitle>Suas Informações</CardTitle>
-        <CardDescription>Atualize seu nome, e-mail e foto de perfil.</CardDescription>
+        <CardDescription>Atualize seu nome e foto de perfil.</CardDescription>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-6">

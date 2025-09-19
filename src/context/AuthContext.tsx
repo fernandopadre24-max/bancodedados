@@ -26,6 +26,7 @@ const initialMockUsers: MockUser[] = [
         providerId: 'password',
         tenantId: null,
         isExample: true,
+        password: 'admin',
     },
     {
         uid: 'mock-user-uid-user1',
@@ -51,6 +52,7 @@ interface AuthContextType {
   login: (user: MockUser) => void;
   logout: () => void;
   signup: (details: { displayName: string; password: string }) => MockUser;
+  updateUser: (user: MockUser) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -88,7 +90,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const storedUsers = loadFromLocalStorage<MockUser[]>('mock_users', []);
     if (storedUsers.length === 0) {
       setUsers(initialMockUsers);
-      saveToLocalStorage('mock_users', initialMockUsers);
     } else {
       setUsers(storedUsers);
     }
@@ -108,9 +109,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (users.length > 0) {
-      saveToLocalStorage('mock_users', users);
-    }
+    saveToLocalStorage('mock_users', users);
   }, [users]);
 
 
@@ -156,8 +155,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return newUser;
   };
 
+  const updateUser = async (updatedUser: MockUser): Promise<void> => {
+    setUsers(prevUsers => prevUsers.map(u => u.uid === updatedUser.uid ? updatedUser : u));
+    login(updatedUser);
+  }
+
   return (
-    <AuthContext.Provider value={{ user, users, loading, login, logout, signup }}>
+    <AuthContext.Provider value={{ user, users, loading, login, logout, signup, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
