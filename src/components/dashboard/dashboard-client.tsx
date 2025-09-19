@@ -85,7 +85,7 @@ export default function DashboardClient({}: DashboardClientProps) {
   }, [transactions, bills, subscriptions]);
 
   if (!clientData) {
-    return <div className="grid gap-6"></div>; // Or a loading skeleton
+    return <div className="grid gap-6"></div>; // Render empty initially to avoid hydration mismatch
   }
 
   const { totalIncome, totalExpenses, balance, totalToPay, totalToReceive, recentTransactions, upcomingBills, upcomingSubscriptions } = clientData;
@@ -272,3 +272,5 @@ export default function DashboardClient({}: DashboardClientProps) {
     </div>
   )
 }
+
+    
