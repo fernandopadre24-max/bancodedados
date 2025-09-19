@@ -43,7 +43,7 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { categoryIcons } from '@/lib/icons';
-import { PlusCircle, Pencil, Trash2, Tag, FolderPlus } from 'lucide-react';
+import { PlusCircle, Pencil, Trash2, Tag } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import {
   AlertDialog,
@@ -77,15 +77,16 @@ const formatDate = (date: Date) => {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
-    }).format(date);
+    }).format(new Date(date));
 };
 
 export default function TransactionsClient() {
-  const { transactions, addTransaction, deleteTransaction, categories } = useData();
-  const [isTransactionDialogOpen, setIsTransactionDialogOpen] = React.useState(false);
+  const { transactions, addTransaction, updateTransaction, deleteTransaction, categories } = useData();
+  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
+  const [editingTransaction, setEditingTransaction] = React.useState<Transaction | null>(null);
   const { toast } = useToast();
 
-  const transactionForm = useForm<z.infer<typeof transactionSchema>>({
+  const form = useForm<z.infer<typeof transactionSchema>>({
     resolver: zodResolver(transactionSchema),
     defaultValues: {
       type: 'expense',
@@ -95,15 +96,42 @@ export default function TransactionsClient() {
     },
   });
 
+  React.useEffect(() => {
+    if (editingTransaction) {
+        form.reset({
+            description: editingTransaction.description,
+            amount: editingTransaction.amount,
+            type: editingTransaction.type,
+            category: editingTransaction.category,
+        });
+    } else {
+        form.reset({
+            type: 'expense',
+            description: '',
+            amount: 0,
+            category: '',
+        });
+    }
+  }, [editingTransaction, form]);
 
-  function onTransactionSubmit(values: z.infer<typeof transactionSchema>) {
-    addTransaction(values);
-    toast({
-        title: "Transação Adicionada",
-        description: `${values.description} foi adicionado às suas transações.`,
-    })
-    transactionForm.reset();
-    setIsTransactionDialogOpen(false);
+
+  function onSubmit(values: z.infer<typeof transactionSchema>) {
+    if (editingTransaction) {
+        updateTransaction({ ...editingTransaction, ...values });
+        toast({
+            title: "Transação Atualizada",
+            description: "Suas alterações foram salvas com sucesso.",
+        });
+    } else {
+        addTransaction(values);
+        toast({
+            title: "Transação Adicionada",
+            description: `${values.description} foi adicionado às suas transações.`,
+        });
+    }
+    
+    setEditingTransaction(null);
+    setIsDialogOpen(false);
   }
 
   function handleDeleteTransaction(transactionId: string) {
@@ -115,27 +143,32 @@ export default function TransactionsClient() {
     });
   }
 
+  function handleOpenDialog(transaction?: Transaction) {
+    setEditingTransaction(transaction || null);
+    setIsDialogOpen(true);
+  }
+
   return (
     <>
       <PageHeader title="Transações" description="Veja e gerencie suas receitas e despesas.">
-        <Dialog open={isTransactionDialogOpen} onOpenChange={setIsTransactionDialogOpen}>
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button onClick={() => handleOpenDialog()}>
               <PlusCircle className="mr-2 h-4 w-4" />
               Adicionar Transação
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
-              <DialogTitle>Adicionar Nova Transação</DialogTitle>
+              <DialogTitle>{editingTransaction ? 'Editar Transação' : 'Adicionar Nova Transação'}</DialogTitle>
               <DialogDescription>
-                Registre uma nova receita ou despesa para manter suas finanças atualizadas.
+                {editingTransaction ? 'Atualize os detalhes da sua transação.' : 'Registre uma nova receita ou despesa para manter suas finanças atualizadas.'}
               </DialogDescription>
             </DialogHeader>
-            <Form {...transactionForm}>
-              <form onSubmit={transactionForm.handleSubmit(onTransactionSubmit)} className="space-y-4">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <FormField
-                  control={transactionForm.control}
+                  control={form.control}
                   name="description"
                   render={({ field }) => (
                     <FormItem>
@@ -148,7 +181,7 @@ export default function TransactionsClient() {
                   )}
                 />
                 <FormField
-                  control={transactionForm.control}
+                  control={form.control}
                   name="amount"
                   render={({ field }) => (
                     <FormItem>
@@ -162,7 +195,7 @@ export default function TransactionsClient() {
                 />
                 <div className="grid grid-cols-2 gap-4">
                   <FormField
-                    control={transactionForm.control}
+                    control={form.control}
                     name="type"
                     render={({ field }) => (
                       <FormItem>
@@ -183,7 +216,7 @@ export default function TransactionsClient() {
                     )}
                   />
                   <FormField
-                    control={transactionForm.control}
+                    control={form.control}
                     name="category"
                     render={({ field }) => (
                       <FormItem>
@@ -206,7 +239,7 @@ export default function TransactionsClient() {
                   />
                 </div>
                 <DialogFooter>
-                  <Button variant="ghost" onClick={() => setIsTransactionDialogOpen(false)}>Cancelar</Button>
+                  <Button variant="ghost" onClick={() => setIsDialogOpen(false)}>Cancelar</Button>
                   <Button type="submit">Salvar Transação</Button>
                 </DialogFooter>
               </form>
@@ -247,7 +280,11 @@ export default function TransactionsClient() {
                     {formatCurrency(transaction.amount)}
                   </TableCell>
                   <TableCell>
-                    <div className="flex items-center justify-end gap-2">
+                    <div className="flex items-center justify-end gap-1">
+                        <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleOpenDialog(transaction)}>
+                            <Pencil className="h-4 w-4" />
+                            <span className="sr-only">Editar</span>
+                        </Button>
                         <AlertDialog>
                             <AlertDialogTrigger asChild>
                                 <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400">

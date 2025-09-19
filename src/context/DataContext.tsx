@@ -24,6 +24,7 @@ interface DataContextType {
   categories: Category[];
   addCategory: (category: Category) => void;
   addTransaction: (transaction: Omit<Transaction, 'id' | 'date'>) => void;
+  updateTransaction: (transaction: Transaction) => void;
   deleteTransaction: (id: string) => void;
   addSavingsGoal: (goal: Omit<SavingsGoal, 'id'>) => void;
   updateSavingsGoal: (goal: SavingsGoal) => void;
@@ -93,7 +94,6 @@ export function DataProvider({ children }: { children: ReactNode }) {
         setBills(userData.bills || []);
         setCategories(userData.categories || initialCategories);
       } else {
-        // New user or example user logging in for the first time
         const isExample = user?.isExample;
         const initialData = {
           transactions: isExample ? initialTransactionsData : [],
@@ -113,17 +113,16 @@ export function DataProvider({ children }: { children: ReactNode }) {
       }
       setIsLoading(false);
     } else {
-      // No user, clear all data
       setTransactions([]);
       setBudgets([]);
       setSavingsGoals([]);
       setSubscriptions([]);
       setBills([]);
       setCategories(initialCategories);
+      setIsLoading(true);
     }
   }, [userId, user?.isExample]);
 
-  // Save all data to a single user-specific key whenever anything changes
   useEffect(() => {
     if (!isLoading && userId) {
       const userData = { transactions, budgets, savingsGoals, subscriptions, bills, categories };
@@ -139,8 +138,18 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   const addTransaction = (transaction: Omit<Transaction, 'id' | 'date'>) => {
-    setTransactions(prev => [{...transaction, id: Date.now().toString(), date: new Date()}, ...prev]);
+    const newTransaction: Transaction = {
+      ...transaction,
+      id: Date.now().toString(),
+      date: new Date(),
+    };
+    setTransactions(prev => [newTransaction, ...prev]);
   };
+  
+  const updateTransaction = (transaction: Transaction) => {
+    setTransactions(prev => prev.map(t => t.id === transaction.id ? transaction : t));
+  };
+
 
   const deleteTransaction = (id: string) => {
     setTransactions(prev => prev.filter(t => t.id !== id));
@@ -241,7 +250,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     setBills(prev => prev.filter(b => b.id !== id));
   };
 
-  const value = {
+  const value: DataContextType = {
     transactions,
     budgets,
     savingsGoals,
@@ -250,6 +259,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
     categories,
     addCategory,
     addTransaction,
+    updateTransaction,
     deleteTransaction,
     addSavingsGoal,
     updateSavingsGoal,
@@ -266,7 +276,7 @@ export function DataProvider({ children }: { children: ReactNode }) {
   };
 
   if (isLoading) {
-    return null;
+    return null; 
   }
 
   return (
