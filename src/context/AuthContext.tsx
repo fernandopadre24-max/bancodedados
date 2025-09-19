@@ -9,8 +9,8 @@ export interface MockUser extends Omit<User, 'providerData' | 'toJSON' | 'delete
     // Add any custom fields if necessary
 }
 
-// Mock users for development without real Firebase config
-export const mockUsers: MockUser[] = [
+// Initial mock users for development
+const initialMockUsers: MockUser[] = [
     {
         uid: 'mock-user-uid-admin',
         email: 'admin@contasimples.com',
@@ -41,22 +41,51 @@ export const mockUsers: MockUser[] = [
     },
 ];
 
-
 interface AuthContextType {
   user: MockUser | null;
+  users: MockUser[];
   loading: boolean;
   login: (user: MockUser) => void;
   logout: () => void;
+  signup: (details: { displayName: string; email: string }) => MockUser;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// Helper function to get data from localStorage
+const loadFromLocalStorage = <T,>(key: string, defaultValue: T): T => {
+    if (typeof window === 'undefined') return defaultValue;
+    try {
+        const item = window.localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+        console.warn(`Error reading localStorage key “${key}”:`, error);
+        return defaultValue;
+    }
+};
+
+// Helper function to save data to localStorage
+const saveToLocalStorage = <T,>(key: string, value: T) => {
+    if (typeof window === 'undefined') return;
+    try {
+        window.localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+        console.warn(`Error writing to localStorage key “${key}”:`, error);
+    }
+};
+
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<MockUser | null>(null);
+  const [users, setUsers] = useState<MockUser[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // This effect ensures that the user state is initialized correctly from sessionStorage.
+    // Load users from localStorage, or use initial list
+    const storedUsers = loadFromLocalStorage<MockUser[]>('mock_users', initialMockUsers);
+    setUsers(storedUsers);
+    
+    // Check for a user in sessionStorage
     try {
         const sessionUser = sessionStorage.getItem('user');
         if (sessionUser) {
@@ -70,6 +99,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   }, []);
 
+  useEffect(() => {
+    // Save users to localStorage whenever the list changes
+    saveToLocalStorage('mock_users', users);
+  }, [users]);
+
+
   const login = (userToLogin: MockUser) => {
     sessionStorage.setItem('user', JSON.stringify(userToLogin));
     setUser(userToLogin);
@@ -79,9 +114,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     sessionStorage.removeItem('user');
     setUser(null);
   };
+  
+  const signup = (details: { displayName: string; email: string }): MockUser => {
+    const newUser: MockUser = {
+        uid: `mock-user-uid-${Date.now()}`,
+        email: details.email,
+        displayName: details.displayName,
+        emailVerified: true,
+        isAnonymous: false,
+        photoURL: `https://picsum.photos/seed/${details.displayName}/40/40`,
+        metadata: {
+            creationTime: new Date().toISOString(),
+            lastSignInTime: new Date().toISOString(),
+        },
+        providerId: 'password',
+        tenantId: null,
+    };
+    setUsers(prev => [...prev, newUser]);
+    login(newUser);
+    return newUser;
+  };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, users, loading, login, logout, signup }}>
       {children}
     </AuthContext.Provider>
   );
